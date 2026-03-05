@@ -33,7 +33,7 @@ export interface Database {
           join_code: string
           start_date: string
           end_date: string
-          status: 'draft' | 'active' | 'closed'
+          status: 'draft' | 'active' | 'closed' | 'cancelled'
           created_by: string
           created_at: string
         }
@@ -43,7 +43,7 @@ export interface Database {
           join_code?: string
           start_date: string
           end_date: string
-          status?: 'draft' | 'active' | 'closed'
+          status?: 'draft' | 'active' | 'closed' | 'cancelled'
           created_by: string
           created_at?: string
         }
@@ -53,7 +53,7 @@ export interface Database {
           join_code?: string
           start_date?: string
           end_date?: string
-          status?: 'draft' | 'active' | 'closed'
+          status?: 'draft' | 'active' | 'closed' | 'cancelled'
           created_by?: string
           created_at?: string
         }

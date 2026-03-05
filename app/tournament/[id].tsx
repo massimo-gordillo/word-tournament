@@ -59,6 +59,10 @@ export default function TournamentDetailScreen() {
       .single();
 
     if (tournamentData) {
+      if (tournamentData.status === 'draft') {
+        router.replace(`/draft-tournament/${id}`);
+        return;
+      }
       setTournament(tournamentData);
     }
 

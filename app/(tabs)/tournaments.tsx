@@ -10,7 +10,7 @@ interface Tournament {
   name: string;
   start_date: string;
   end_date: string;
-  status: 'draft' | 'active' | 'closed';
+  status: 'draft' | 'active' | 'closed' | 'cancelled';
   created_by: string;
   join_code: string;
 }
@@ -48,7 +48,7 @@ export default function OngoingTournamentsScreen() {
       .from('tournaments')
       .select('*')
       .in('id', tournamentIds)
-      .in('status', ['active', 'draft'])
+      .in('status', ['active', 'closed'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -103,14 +103,16 @@ export default function OngoingTournamentsScreen() {
     switch (status) {
       case 'active':
         return '#10b981';
-      case 'draft':
-        return '#f59e0b';
+      case 'closed':
+        return '#6b7280';
       default:
         return '#6b7280';
     }
   };
 
   const getStatusText = (status: string) => {
+    if (status === 'active') return 'Active';
+    if (status === 'closed') return 'Closed';
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 

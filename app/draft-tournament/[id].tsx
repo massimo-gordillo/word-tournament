@@ -1,9 +1,31 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, Users, Copy, Play } from 'lucide-react-native';
+import { ChevronLeft, Users, Copy, Play, Trash2 } from 'lucide-react-native';
+
+/** Cross-platform confirm: Alert.alert on native, window.confirm on web (Alert.alert doesn't work on web). */
+function confirmDiscard(
+  title: string,
+  message: string,
+  onConfirm: () => void | Promise<void>,
+  onCancel?: () => void
+) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+    const ok = window.confirm([title, message].filter(Boolean).join('\n\n'));
+    if (ok) {
+      void Promise.resolve(onConfirm());
+    } else {
+      onCancel?.();
+    }
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: 'Keep draft', style: 'cancel', onPress: onCancel },
+    { text: 'Discard', style: 'destructive', onPress: () => void Promise.resolve(onConfirm()) },
+  ]);
+}
 
 interface Tournament {
   id: string;
@@ -28,6 +50,8 @@ export default function DraftTournamentScreen() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -126,6 +150,30 @@ export default function DraftTournamentScreen() {
     }
   };
 
+  const handleDiscardTournament = () => {
+    setDiscardError(null);
+    confirmDiscard(
+      'Discard tournament',
+      'This will cancel the tournament and remove it from your drafts. This cannot be undone.',
+      async () => {
+        if (!tournament || !user?.id) return;
+        setDiscarding(true);
+        setDiscardError(null);
+        const { error } = await supabase
+          .from('tournaments')
+          .update({ status: 'cancelled' })
+          .eq('id', tournament.id)
+          .eq('created_by', user.id);
+        setDiscarding(false);
+        if (error) {
+          setDiscardError(error.message || 'Failed to discard tournament');
+          return;
+        }
+        router.replace('/(tabs)/manage');
+      }
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -155,6 +203,7 @@ export default function DraftTournamentScreen() {
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -166,17 +215,8 @@ export default function DraftTournamentScreen() {
           />
         }
       >
-        <View style={styles.statusCard}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>DRAFT</Text>
-          </View>
-          <Text style={styles.statusDescription}>
-            Tournament is in draft mode. Share the join code with players and start when ready.
-          </Text>
-        </View>
-
         <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Tournament Duration</Text>
+          <Text style={styles.infoLabel}>Tournament length</Text>
           <Text style={styles.infoValue}>
             {(() => {
               const start = new Date(tournament.start_date);
@@ -189,21 +229,15 @@ export default function DraftTournamentScreen() {
               return `${days} days`;
             })()}
           </Text>
-          <Text style={styles.infoSubtext}>
-            Starts when you activate the tournament
-          </Text>
         </View>
 
-        <View style={styles.joinCodeCard}>
-          <View style={styles.joinCodeHeader}>
-            <Text style={styles.joinCodeLabel}>Join Code</Text>
-            <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
-              <Copy size={18} color="#10b981" />
-              <Text style={styles.copyButtonText}>Copy</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.joinCodeRow}>
+          <Text style={styles.joinCodeLabel}>Join code </Text>
           <Text style={styles.joinCodeValue}>{tournament.join_code}</Text>
-          <Text style={styles.joinCodeHint}>Share this code with players to join the tournament</Text>
+          <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
+            <Copy size={18} color="#10b981" />
+            <Text style={styles.copyButtonText}>Copy</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.participantsSection}>
@@ -241,6 +275,13 @@ export default function DraftTournamentScreen() {
           </View>
         )}
 
+        
+      </ScrollView>
+
+      <View style={styles.footer}>
+        {discardError ? (
+          <Text style={styles.errorText}>{discardError}</Text>
+        ) : null}
         <TouchableOpacity
           style={[styles.startButton, !canStart && styles.startButtonDisabled]}
           onPress={handleStartTournament}
@@ -251,11 +292,25 @@ export default function DraftTournamentScreen() {
           ) : (
             <>
               <Play size={20} color="#fff" />
-              <Text style={styles.startButtonText}>Start Tournament</Text>
+              <Text style={styles.startButtonText}>Start tournament</Text>
             </>
           )}
         </TouchableOpacity>
-      </ScrollView>
+        <TouchableOpacity
+          style={styles.discardButton}
+          onPress={handleDiscardTournament}
+          disabled={discarding}
+        >
+          {discarding ? (
+            <ActivityIndicator color="#ef4444" />
+          ) : (
+            <>
+              <Trash2 size={20} color="#ef4444" />
+              <Text style={styles.discardButtonText}>Discard tournament</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -290,34 +345,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  statusCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statusBadge: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statusDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+  scrollContent: {
+    paddingBottom: 24,
   },
   infoCard: {
     backgroundColor: '#fff',
@@ -340,14 +369,11 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     fontWeight: '500',
   },
-  infoSubtext: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
-  joinCodeCard: {
+  joinCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 20,
+    padding: 16,
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
@@ -355,17 +381,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  joinCodeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    gap: 8,
   },
   joinCodeLabel: {
     fontSize: 14,
     color: '#666',
     fontWeight: '500',
+  },
+  joinCodeValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#10b981',
+    letterSpacing: 2,
+    flex: 1,
   },
   copyButton: {
     flexDirection: 'row',
@@ -380,19 +408,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#10b981',
     fontWeight: '500',
-  },
-  joinCodeValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#10b981',
-    letterSpacing: 4,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  joinCodeHint: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
   },
   participantsSection: {
     backgroundColor: '#fff',
@@ -477,7 +492,7 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
     borderRadius: 12,
-    marginBottom: 24,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -492,5 +507,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  discardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ef4444',
+    backgroundColor: 'transparent',
+  },
+  discardButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: '#f5f5f5',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 });
