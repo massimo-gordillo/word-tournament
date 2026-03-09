@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl }
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Target, TrendingUp } from 'lucide-react-native';
+import { useAppConfig } from '@/contexts/ConfigContext';
 
 interface Stats {
   averageScore: number;
@@ -15,6 +16,7 @@ interface Stats {
 
 export default function StatisticsScreen() {
   const { user } = useAuth();
+  const { config } = useAppConfig();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,31 +170,33 @@ export default function StatisticsScreen() {
           <View style={styles.detailCard}>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>1 Guess</Text>
-              <Text style={styles.guideValue}>20 points</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess1 ?? 20} points</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>2 Guesses</Text>
-              <Text style={styles.guideValue}>8 points</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess2 ?? 8} points</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>3 Guesses</Text>
-              <Text style={styles.guideValue}>6 points</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess3 ?? 6} points</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>4 Guesses</Text>
-              <Text style={styles.guideValue}>4 points</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess4 ?? 4} points</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>5 Guesses</Text>
-              <Text style={styles.guideValue}>2 points</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess5 ?? 2} points</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>6 Guesses</Text>
-              <Text style={styles.guideValue}>1 point</Text>
+              <Text style={styles.guideValue}>{config?.pointsGuess6 ?? 1} point</Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>Missed/Failed</Text>
-              <Text style={[styles.guideValue, { color: '#ef4444' }]}>-2 points</Text>
+              <Text style={[styles.guideValue, { color: '#ef4444' }]}>
+                {config?.pointsMissed ?? -2} points
+              </Text>
             </View>
           </View>
         </View>

@@ -4,6 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Users, Copy, Play, Trash2 } from 'lucide-react-native';
+import { useAppConfig } from '@/contexts/ConfigContext';
 
 /** Cross-platform confirm: Alert.alert on native, window.confirm on web (Alert.alert doesn't work on web). */
 function confirmDiscard(
@@ -46,6 +47,7 @@ interface Participant {
 export default function DraftTournamentScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
+  const { config } = useAppConfig();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +191,80 @@ export default function DraftTournamentScreen() {
   }
 
   const canStart = participants.length >= 2;
+  const isCreator = user?.id != null && tournament.created_by === user.id;
+
+  if (!isCreator) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.title}>{tournament.name}</Text>
+        </View>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await loadTournamentData();
+                setRefreshing(false);
+              }}
+            />
+          }
+        >
+          <View style={styles.waitingCard}>
+            <Text style={styles.waitingTitle}>Waiting</Text>
+            <Text style={styles.waitingMessage}>
+              You're in this tournament. The host will start it when everyone is ready.
+            </Text>
+          </View>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoLabel}>Tournament length</Text>
+            <Text style={styles.infoValue}>
+              {(() => {
+                const start = new Date(tournament.start_date);
+                const end = new Date(tournament.end_date);
+                const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                if (days === 3) return '3 days';
+                if (days === 7) return '7 days';
+                if (days === 14) return '2 weeks';
+                if (days === 28) return '4 weeks';
+                return `${days} days`;
+              })()}
+            </Text>
+          </View>
+          <View style={styles.participantsSection}>
+            <View style={styles.participantsHeader}>
+              <Users size={24} color="#1a1a1a" />
+              <Text style={styles.participantsTitle}>
+                Players ({participants.length}/{config?.maxParticipantsPerTournament ?? 15})
+              </Text>
+            </View>
+            {participants.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No players yet</Text>
+              </View>
+            ) : (
+              participants.map(participant => (
+                <View key={participant.id} style={styles.participantCard}>
+                  <View style={styles.participantAvatar}>
+                    <Text style={styles.participantInitial}>
+                      {participant.display_name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.participantName}>{participant.display_name}</Text>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -242,7 +318,7 @@ export default function DraftTournamentScreen() {
           <View style={styles.participantsHeader}>
             <Users size={24} color="#1a1a1a" />
             <Text style={styles.participantsTitle}>
-              Players ({participants.length}/15)
+              Players ({participants.length}/{config?.maxParticipantsPerTournament ?? 15})
             </Text>
           </View>
 
@@ -345,6 +421,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 24,
+  },
+  waitingCard: {
+    backgroundColor: '#f0f9ff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+  },
+  waitingTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0369a1',
+    marginBottom: 8,
+  },
+  waitingMessage: {
+    fontSize: 14,
+    color: '#0c4a6e',
+    lineHeight: 20,
   },
   infoCard: {
     backgroundColor: '#fff',

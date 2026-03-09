@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Activi
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { getTodayDateEST, getTimeUntilCutoff } from '@/lib/dateUtils';
+import { useAppConfig } from '@/contexts/ConfigContext';
 
 interface Submission {
   submission_text: string;
@@ -12,6 +13,7 @@ interface Submission {
 
 export default function DailySubmissionScreen() {
   const { user } = useAuth();
+  const { config } = useAppConfig();
   const [submissionText, setSubmissionText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -226,18 +228,20 @@ export default function DailySubmissionScreen() {
       <View style={styles.scoringCard}>
         <Text style={styles.scoringTitle}>Scoring System</Text>
         <View style={styles.scoringRow}>
-          <Text style={styles.scoringText}>1 guess: 20 points</Text>
-          <Text style={styles.scoringText}>2 guesses: 8 points</Text>
+          <Text style={styles.scoringText}>1 guess: {config?.pointsGuess1 ?? 20} points</Text>
+          <Text style={styles.scoringText}>2 guesses: {config?.pointsGuess2 ?? 8} points</Text>
         </View>
         <View style={styles.scoringRow}>
-          <Text style={styles.scoringText}>3 guesses: 6 points</Text>
-          <Text style={styles.scoringText}>4 guesses: 4 points</Text>
+          <Text style={styles.scoringText}>3 guesses: {config?.pointsGuess3 ?? 6} points</Text>
+          <Text style={styles.scoringText}>4 guesses: {config?.pointsGuess4 ?? 4} points</Text>
         </View>
         <View style={styles.scoringRow}>
-          <Text style={styles.scoringText}>5 guesses: 2 points</Text>
-          <Text style={styles.scoringText}>6 guesses: 1 point</Text>
+          <Text style={styles.scoringText}>5 guesses: {config?.pointsGuess5 ?? 2} points</Text>
+          <Text style={styles.scoringText}>6 guesses: {config?.pointsGuess6 ?? 1} points</Text>
         </View>
-        <Text style={styles.scoringText}>No submission: -2 points</Text>
+        <Text style={styles.scoringText}>
+          No submission: {config?.pointsMissed ?? -2} points
+        </Text>
       </View>
     </ScrollView>
   );

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Activi
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { useAppConfig } from '@/contexts/ConfigContext';
 import { Search } from 'lucide-react-native';
 
 interface Tournament {
@@ -17,6 +18,7 @@ interface Tournament {
 
 export default function OngoingTournamentsScreen() {
   const { user } = useAuth();
+  const { config } = useAppConfig();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
@@ -50,7 +52,8 @@ export default function OngoingTournamentsScreen() {
       .from('tournaments')
       .select('*')
       .in('id', tournamentIds)
-      .in('status', ['active', 'closed'])
+      .in('status', ['active', 'closed', 'draft'])
+      .neq('created_by', user.id)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -105,9 +108,11 @@ export default function OngoingTournamentsScreen() {
       if (message.includes('already in this tournament')) {
         setJoinError('You are already in this tournament');
       } else if (message.includes('maximum number of tournaments')) {
-        setJoinError('You are already in the maximum number of tournaments (4)');
+        const max = config?.maxTournamentsPerUser ?? 4;
+        setJoinError(`You are already in the maximum number of tournaments (${max})`);
       } else if (message.includes('tournament is full')) {
-        setJoinError('This tournament is full');
+        const maxPlayers = config?.maxParticipantsPerTournament ?? 15;
+        setJoinError(`This tournament is full (${maxPlayers} players max)`);
       } else if (message.includes('Invalid or inactive join code')) {
         setJoinError('Invalid join code');
       } else {
@@ -120,21 +125,26 @@ export default function OngoingTournamentsScreen() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isCreator?: boolean) => {
     switch (status) {
       case 'active':
         return '#10b981';
       case 'closed':
         return '#6b7280';
+      case 'draft':
+        return isCreator ? '#f59e0b' : '#6b7280'; // Waiting = neutral
       default:
         return '#6b7280';
     }
   };
 
-  const getStatusText = (status: string) => {
-    if (status === 'active') return 'Active';
-    if (status === 'closed') return 'Closed';
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  const getStatusText = (tournament: Tournament) => {
+    if (tournament.status === 'active') return 'Active';
+    if (tournament.status === 'closed') return 'Closed';
+    if (tournament.status === 'draft') {
+      return tournament.created_by === user?.id ? 'Draft' : 'Waiting';
+    }
+    return tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1);
   };
 
   return (
@@ -175,8 +185,8 @@ export default function OngoingTournamentsScreen() {
               >
                 <View style={styles.tournamentHeader}>
                   <Text style={styles.tournamentName}>{tournament.name}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(tournament.status) }]}>
-                    <Text style={styles.statusText}>{getStatusText(tournament.status)}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(tournament.status, tournament.created_by === user?.id) }]}>
+                    <Text style={styles.statusText}>{getStatusText(tournament)}</Text>
                   </View>
                 </View>
                 <Text style={styles.tournamentDate}>

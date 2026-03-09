@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Plus, FileText, History, ChevronDown } from 'lucide-react-native';
+import { useAppConfig } from '@/contexts/ConfigContext';
+import { devLog } from '@/utils/logger';
 
 interface Tournament {
   id: string;
@@ -29,6 +31,7 @@ const DURATION_OPTIONS: DurationOption[] = [
 
 export default function ManageTournamentsScreen() {
   const { user } = useAuth();
+  const { config } = useAppConfig();
   const [activeView, setActiveView] = useState<'menu' | 'drafts' | 'past'>('menu');
   const [draftTournaments, setDraftTournaments] = useState<Tournament[]>([]);
   const [pastTournaments, setPastTournaments] = useState<Tournament[]>([]);
@@ -121,6 +124,11 @@ export default function ManageTournamentsScreen() {
       const max = (data[0] as any).max_limit ?? 4;
 
       if (current >= max) {
+        devLog('Create tournament blocked by limit', {
+          currentTournaments: current,
+          maxTournamentsAllowed: max,
+          appConfig: config,
+        });
         setLimitQuantity(max);
         setLimitModalVisible(true);
         return;
@@ -160,7 +168,8 @@ export default function ManageTournamentsScreen() {
       setSaving(false);
       const message = createError.message || 'Unable to create tournament';
       if (message.includes('maximum number of tournaments')) {
-        setError('You are already in the maximum number of tournaments (4)');
+        const max = config?.maxTournamentsPerUser ?? 4;
+        setError(`You are already in the maximum number of tournaments (${max})`);
       } else {
         setError(message);
       }
