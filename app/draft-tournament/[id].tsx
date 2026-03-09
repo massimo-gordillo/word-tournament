@@ -159,11 +159,9 @@ export default function DraftTournamentScreen() {
         if (!tournament || !user?.id) return;
         setDiscarding(true);
         setDiscardError(null);
-        const { error } = await supabase
-          .from('tournaments')
-          .update({ status: 'cancelled' })
-          .eq('id', tournament.id)
-          .eq('created_by', user.id);
+        const { error } = await supabase.rpc('cancel_tournament_draft', {
+          p_tournament_id: tournament.id,
+        });
         setDiscarding(false);
         if (error) {
           setDiscardError(error.message || 'Failed to discard tournament');

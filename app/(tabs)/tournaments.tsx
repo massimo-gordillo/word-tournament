@@ -24,6 +24,8 @@ export default function OngoingTournamentsScreen() {
   const [joinError, setJoinError] = useState('');
   const [joiningTournament, setJoiningTournament] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+  const [limitQuantity, setLimitQuantity] = useState(4);
 
   useEffect(() => {
     loadTournaments();
@@ -62,6 +64,25 @@ export default function OngoingTournamentsScreen() {
     setRefreshing(true);
     await loadTournaments();
     setRefreshing(false);
+  };
+
+  const checkTournamentLimitAndMaybe = async (onAllowed: () => void) => {
+    if (!user) return;
+
+    const { data, error } = await supabase.rpc('get_tournament_limit_info');
+
+    if (!error && data && data.length > 0) {
+      const current = (data[0] as any).current_count ?? 0;
+      const max = (data[0] as any).max_limit ?? 4;
+
+      if (current >= max) {
+        setLimitQuantity(max);
+        setLimitModalVisible(true);
+        return;
+      }
+    }
+
+    onAllowed();
   };
 
   const handleJoinTournament = async () => {
@@ -122,7 +143,9 @@ export default function OngoingTournamentsScreen() {
         <Text style={styles.title}>Ongoing Tournaments</Text>
         <TouchableOpacity
           style={styles.joinButton}
-          onPress={() => setJoinModalVisible(true)}
+          onPress={() => {
+            void checkTournamentLimitAndMaybe(() => setJoinModalVisible(true));
+          }}
         >
           <Search size={20} color="#fff" />
           <Text style={styles.joinButtonText}>Join by Code</Text>
@@ -213,6 +236,31 @@ export default function OngoingTournamentsScreen() {
                 ) : (
                   <Text style={styles.modalButtonTextJoin}>Join</Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={limitModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLimitModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tournament limit reached</Text>
+            <Text style={styles.modalSubtitle}>
+              You have hit your limit of {limitQuantity} continuous tournaments. Delete a draft tournament
+              you've created, leave a tournament, or wait for an ongoing tournament to complete.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setLimitModalVisible(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>OK</Text>
               </TouchableOpacity>
             </View>
           </View>
