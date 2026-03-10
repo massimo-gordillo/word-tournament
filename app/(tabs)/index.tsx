@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { getTodayDateEST, getTimeUntilCutoff } from '@/lib/dateUtils';
 import { useAppConfig } from '@/contexts/ConfigContext';
+import { DailySubmissionCard } from '@/components/DailySubmissionCard';
+import { devLog } from '@/utils/logger';
 
 interface Submission {
   submission_text: string;
@@ -30,7 +32,8 @@ export default function DailySubmissionScreen() {
   }, []);
 
   const updateCountdown = () => {
-    const { hours, minutes, seconds, isPastCutoff: pastCutoff } = getTimeUntilCutoff();
+    const cutoffHour = config?.cutoffHourEst ?? 23;
+    const { hours, minutes, seconds, isPastCutoff: pastCutoff } = getTimeUntilCutoff(cutoffHour);
 
     if (pastCutoff) {
       setIsPastCutoff(true);
@@ -38,7 +41,7 @@ export default function DailySubmissionScreen() {
       return;
     }
 
-    setTimeUntilCutoff(`${hours}h ${minutes}m ${seconds}s until cutoff`);
+    setTimeUntilCutoff(`${hours}h ${minutes}m until cutoff`);
     setIsPastCutoff(false);
   };
 
@@ -65,27 +68,136 @@ export default function DailySubmissionScreen() {
   };
 
   const parseWordle = (text: string) => {
-    const lines = text.trim().split('\n');
-    const firstLine = lines[0];
-    const match = firstLine.match(/(\d+)\/\d+/);
+    const trimmed = text.trim();
+    if (!trimmed) return null;
 
-    if (!match) return null;
+    const lines = trimmed.split('\n');
+    const emojiLines = lines.filter(line => /[🟩🟨⬜⬛]/.test(line));
 
-    const guesses = parseInt(match[1]);
-    return {
+    const rowCount = emojiLines.length;
+    const maxRows = config?.maxSubmissionRows ?? 6;
+    const hasEmojiRows = rowCount > 0;
+    if (!hasEmojiRows) {
+      devLog('parseWordle: no emoji rows found', { text });
+      return null;
+    }
+
+    if (rowCount > maxRows) {
+      devLog('parseWordle: too many rows', { rowCount, maxRows });
+      return null;
+    }
+
+    // Total number of square emojis across all rows
+    let totalSquares = 0;
+    let rowShapeValid = true;
+    const normalizedRows: string[] = [];
+    for (const line of emojiLines) {
+      const onlySquares = line.replace(/[^🟩🟨⬜⬛]/g, '');
+      // Count logical squares by mapping each emoji to a single ASCII char (B/Y/G),
+      // since emoji are multi-code-unit in JS string length.
+      let rowChars = '';
+      for (const ch of onlySquares) {
+        if (ch === '🟩') {
+          rowChars += 'G';
+        } else if (ch === '🟨') {
+          rowChars += 'Y';
+        } else {
+          // ⬛ or ⬜ -> B
+          rowChars += 'B';
+        }
+      }
+
+      const visibleSquares = rowChars.length;
+      totalSquares += visibleSquares;
+
+      // Each row must be exactly 5 squares after normalization
+      if (visibleSquares !== 5) {
+        rowShapeValid = false;
+        devLog('parseWordle: invalid row shape (normalized length)', {
+          line,
+          onlySquares,
+          rowChars,
+          visibleSquares,
+        });
+        return null;
+      }
+
+      normalizedRows.push(rowChars);
+    }
+
+    // Total squares must be a multiple of 5 and at least 5
+    const squaresMultipleOfFive = totalSquares >= 5 && totalSquares % 5 === 0;
+    if (!squaresMultipleOfFive) {
+      devLog('parseWordle: total squares invalid', { totalSquares });
+      return null;
+    }
+
+    // Use normalized chars for final-row validation
+    const lastRowChars = normalizedRows[normalizedRows.length - 1];
+    const allGreen = lastRowChars === 'GGGGG';
+
+    const normalizedGrid = normalizedRows.join('\n');
+
+    // If maxRows rows and final row is not all green, treat as failure
+    if (rowCount === maxRows && !allGreen) {
+      devLog('parseWordle: max rows, final row not all green -> score -2', {
+        rowCount,
+        lastRowChars,
+        normalizedGrid,
+      });
+      return { guesses: rowCount, score: -2, normalizedGrid };
+    }
+
+    // For fewer than 6 rows, final row must be all green
+    if (rowCount < 6 && !allGreen) {
+      devLog('parseWordle: <6 rows and final row not all green', {
+        rowCount,
+        lastRowChars,
+      });
+      return null;
+    }
+
+    const guesses = rowCount;
+    const score =
+      guesses === 1
+        ? 20
+        : guesses === 2
+        ? 8
+        : guesses === 3
+        ? 6
+        : guesses === 4
+        ? 4
+        : guesses === 5
+        ? 2
+        : guesses === 6
+        ? 1
+        : -2;
+
+    const debugInfo = {
+      rowCount,
+      totalSquares,
+      hasEmojiRows,
+      rowShapeValid,
+      squaresMultipleOfFive,
+      lastRowChars,
+      allGreen,
       guesses,
-      score: guesses === 1 ? 20 : guesses === 2 ? 8 : guesses === 3 ? 6 : guesses === 4 ? 4 : guesses === 5 ? 2 : guesses === 6 ? 1 : -2
+      score,
+      normalizedGrid,
     };
+    devLog('parseWordle: parsed successfully', debugInfo);
+
+    return { guesses, score, normalizedGrid };
   };
 
   const handleSubmit = async () => {
     if (!submissionText.trim()) {
-      setError('Please paste your Wordle result');
+      setError('Please paste your result for today\'s Wordle');
       return;
     }
 
     if (isPastCutoff) {
-      setError('Submission window has closed for today');
+      setError('Submission for today is closed, you can submit tomorrow\'s starting at 12:01AM EST.');
       return;
     }
 
@@ -94,7 +206,14 @@ export default function DailySubmissionScreen() {
 
     const parsed = parseWordle(submissionText);
     if (!parsed) {
-      setError('Invalid Wordle format. Please paste the complete share text.');
+      setError('Invalid Wordle grid. Please paste the complete result including the emoji rows.');
+      setLoading(false);
+      return;
+    }
+
+    if (!parsed.normalizedGrid) {
+      devLog('parseWordle: missing normalizedGrid on parsed result', parsed);
+      setError('Something went wrong parsing your result. Please try pasting it again.');
       setLoading(false);
       return;
     }
@@ -107,7 +226,8 @@ export default function DailySubmissionScreen() {
         {
           user_id: user!.id,
           submission_date: today,
-          submission_text: submissionText.trim(),
+          // store normalized char grid (B/Y/G) instead of raw emojis
+          submission_text: parsed.normalizedGrid,
           wordle_score: parsed.score,
         },
       ])
@@ -117,8 +237,15 @@ export default function DailySubmissionScreen() {
     setLoading(false);
 
     if (dbError) {
-      setError(dbError.message);
+      const message = dbError.message || 'Unable to save submission';
+      devLog('handleSubmit: backend error', { message, dbError });
+      if (message.toLowerCase().includes('invalid wordle grid')) {
+        setError('Invalid Wordle grid. Please paste the complete result including the emoji rows.');
+      } else {
+        setError(message);
+      }
     } else {
+      devLog('handleSubmit: submission saved', { data });
       setTodaySubmission({
         submission_text: data.submission_text,
         wordle_score: data.wordle_score,
@@ -126,19 +253,6 @@ export default function DailySubmissionScreen() {
       });
       setSubmissionText('');
     }
-  };
-
-  const renderWordleGrid = (text: string) => {
-    const lines = text.split('\n');
-    const gridLines = lines.filter(line => /[🟩🟨⬜⬛]/.test(line));
-
-    return (
-      <View style={styles.wordleGrid}>
-        {gridLines.map((line, index) => (
-          <Text key={index} style={styles.wordleRow}>{line}</Text>
-        ))}
-      </View>
-    );
   };
 
   if (todaySubmission) {
@@ -154,16 +268,12 @@ export default function DailySubmissionScreen() {
           <Text style={styles.timer}>{timeUntilCutoff}</Text>
         </View>
 
-        <View style={styles.submittedCard}>
-          <Text style={styles.submittedTitle}>Submitted Successfully!</Text>
-          <Text style={styles.scoreText}>Score: {todaySubmission.wordle_score} points</Text>
-
-          {renderWordleGrid(todaySubmission.submission_text)}
-
-          <Text style={styles.submittedTime}>
-            Submitted at {new Date(todaySubmission.submitted_at).toLocaleTimeString()}
-          </Text>
-        </View>
+        <DailySubmissionCard
+          dateLabel="Today"
+          didSubmit
+          score={todaySubmission.wordle_score}
+          submissionText={todaySubmission.submission_text}
+        />
 
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
@@ -383,15 +493,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a1a1a',
     marginBottom: 16,
-  },
-  wordleGrid: {
-    marginVertical: 16,
-    alignItems: 'center',
-  },
-  wordleRow: {
-    fontSize: 24,
-    marginBottom: 4,
-    letterSpacing: 4,
   },
   submittedTime: {
     fontSize: 14,

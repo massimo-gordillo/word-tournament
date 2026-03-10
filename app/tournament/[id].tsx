@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Trophy } from 'lucide-react-native';
 import { getTodayDateEST, getYesterdayDateEST, getDateInEST } from '@/lib/dateUtils';
+import { DailySubmissionCard } from '@/components/DailySubmissionCard';
 
 interface Tournament {
   id: string;
@@ -35,6 +36,7 @@ export default function TournamentDetailScreen() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [scores, setScores] = useState<Score[]>([]);
   const [todaySubmissions, setTodaySubmissions] = useState<Submission[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
   const [participants, setParticipants] = useState<
     { user_id: string; display_name: string; forfeited: boolean }[]
   >([]);
@@ -90,15 +92,29 @@ export default function TournamentDetailScreen() {
 
       setParticipants(participantDetails);
 
-      // Today's submissions with names
-      const today = getTodayDateEST();
-      const { data: todaySubmissionsData } = await supabase
+      // All submissions for this tournament window
+      const { data: allSubmissionsData } = await supabase
         .from('daily_submissions')
         .select('user_id, submission_text, wordle_score, submission_date')
-        .eq('submission_date', today)
-        .in('user_id', participantIds);
+        .in('user_id', participantIds)
+        .gte('submission_date', tournamentData.start_date)
+        .lte('submission_date', tournamentData.end_date);
 
-      const submittedUserIds = todaySubmissionsData?.map(s => s.user_id) || [];
+      const allSubmissionsWithNames: Submission[] =
+        allSubmissionsData?.map(s => ({
+          ...s,
+          display_name: usersMap.get(s.user_id) || 'Unknown',
+        })) ?? [];
+
+      setAllSubmissions(allSubmissionsWithNames);
+
+      // Today's submissions (from allSubmissions)
+      const today = getTodayDateEST();
+      const todaySubmissionsData = allSubmissionsWithNames.filter(
+        s => s.submission_date === today,
+      );
+
+      const submittedUserIds = todaySubmissionsData.map(s => s.user_id);
       const allSubmitted = participantIds.length === 0
         ? false
         : participantIds.length === submittedUserIds.length;
@@ -109,30 +125,23 @@ export default function TournamentDetailScreen() {
       const ready = allSubmitted || isPastCutoff;
       setResultsReady(ready);
 
-      const todaySubmissionsWithNames =
-        todaySubmissionsData?.map(s => ({
-          ...s,
-          display_name: usersMap.get(s.user_id) || 'Unknown',
-        })) ?? [];
+      setTodaySubmissions(todaySubmissionsData);
 
-      setTodaySubmissions(todaySubmissionsWithNames);
-
-      // Leaderboard: use daily_submissions up to yesterday or today depending on readiness
+      // Leaderboard: use submissions up to yesterday or today depending on readiness
       const baseCutoff = ready ? getTodayDateEST() : getYesterdayDateEST();
       const cutoffDate =
         baseCutoff < tournamentData.end_date ? baseCutoff : tournamentData.end_date;
 
-      const { data: scoreSubmissions } = await supabase
-        .from('daily_submissions')
-        .select('user_id, wordle_score, submission_date')
-        .in('user_id', participantIds)
-        .gte('submission_date', tournamentData.start_date)
-        .lte('submission_date', cutoffDate);
-
       const totals = new Map<string, number>();
-      scoreSubmissions?.forEach(s => {
-        totals.set(s.user_id, (totals.get(s.user_id) || 0) + s.wordle_score);
-      });
+      allSubmissionsWithNames
+        .filter(
+          s =>
+            s.submission_date >= tournamentData.start_date &&
+            s.submission_date <= cutoffDate,
+        )
+        .forEach(s => {
+          totals.set(s.user_id, (totals.get(s.user_id) || 0) + s.wordle_score);
+        });
 
       const formattedScores = participantDetails
         .map(p => ({
@@ -147,15 +156,6 @@ export default function TournamentDetailScreen() {
     }
 
     setLoading(false);
-  };
-
-  const renderWordleGrid = (text: string) => {
-    const lines = text.split('\n');
-    const gridLines = lines.filter(line => /[🟩🟨⬜⬛]/.test(line));
-
-    return gridLines.map((line, index) => (
-      <Text key={index} style={styles.wordleRow}>{line}</Text>
-    ));
   };
 
   if (loading) {
@@ -175,6 +175,8 @@ export default function TournamentDetailScreen() {
   }
 
   const todaySubmittedIds = new Set(todaySubmissions.map(s => s.user_id));
+
+  const isCompleted = tournament.status === 'closed';
 
   const getPlayerStatus = (userId: string) => {
     if (todaySubmittedIds.has(userId)) {
@@ -241,14 +243,14 @@ export default function TournamentDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Trophy size={20} color="#1a1a1a" />
-            <Text style={styles.sectionTitle}>Leaderboard</Text>
+            <Text style={styles.sectionTitle}>
+              {isCompleted
+                ? 'Final Standings'
+                : resultsReady
+                ? "Today's Leaderboard"
+                : "Yesterday's Leaderboard (Waiting)"}
+            </Text>
           </View>
-          <Text style={styles.leaderboardStatus}>
-            {resultsReady ? "Today's standings:" : "Today's standings: Waiting"}
-          </Text>
-          <Text style={styles.leaderboardSubtext}>
-            {resultsReady ? "Today's leaderboard" : "Yesterday's leaderboard"}
-          </Text>
 
           {scores.length === 0 ? (
             <Text style={styles.emptyText}>No scores yet</Text>
@@ -270,32 +272,75 @@ export default function TournamentDetailScreen() {
           )}
         </View>
 
+        {/* All Results section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Results</Text>
-          {todaySubmissions.length === 0 ? (
-            <Text style={styles.emptyText}>No submissions yet today</Text>
-          ) : !resultsReady ? (
-            todaySubmissions.map(submission => (
-              <View key={submission.user_id} style={styles.submissionCard}>
-                <View style={styles.submissionHeader}>
-                  <Text style={styles.submissionName}>{submission.display_name}</Text>
-                  <Text style={styles.submissionScore}>Submitted</Text>
-                </View>
-                <Text style={styles.waitingSubtext}>Waiting for others to submit</Text>
-              </View>
-            ))
+          <Text style={styles.sectionTitle}>All Results</Text>
+          {participants.length === 0 ? (
+            <Text style={styles.emptyText}>No players in this tournament</Text>
           ) : (
-            todaySubmissions.map(submission => (
-              <View key={submission.user_id} style={styles.submissionCard}>
-                <View style={styles.submissionHeader}>
-                  <Text style={styles.submissionName}>{submission.display_name}</Text>
-                  <Text style={styles.submissionScore}>{submission.wordle_score} pts</Text>
-                </View>
-                <View style={styles.wordleGrid}>
-                  {renderWordleGrid(submission.submission_text)}
-                </View>
-              </View>
-            ))
+            <>
+              {(() => {
+                const startDateStr = tournament.start_date.slice(0, 10);
+                const endDateStr = tournament.end_date.slice(0, 10);
+                const todayStr = getTodayDateEST();
+
+                // Clamp to tournament range; for completed tournaments, use end date,
+                // for active ones, use min(today, end).
+                const maxDateStr =
+                  isCompleted || todayStr > endDateStr ? endDateStr : todayStr;
+
+                const days: string[] = [];
+
+                const addOneDay = (dateStr: string) => {
+                  const [y, m, d] = dateStr.split('-').map(Number);
+                  const dt = new Date(y, m - 1, d);
+                  dt.setDate(dt.getDate() + 1);
+                  const year = dt.getFullYear();
+                  const month = String(dt.getMonth() + 1).padStart(2, '0');
+                  const day = String(dt.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                };
+
+                if (startDateStr <= maxDateStr) {
+                  let current = startDateStr;
+                  while (current <= maxDateStr) {
+                    days.push(current);
+                    current = addOneDay(current);
+                  }
+                }
+
+                return days.map(date => {
+                  const submissionsForDay = allSubmissions.filter(
+                    s => s.submission_date === date,
+                  );
+
+                  return (
+                    <View key={date} style={styles.resultsDay}>
+                      <Text style={styles.resultsDayTitle}>
+                        {new Date(date).toLocaleDateString()}
+                      </Text>
+                      <View style={styles.resultsDayDivider} />
+                      {participants.map(p => {
+                        const sub = submissionsForDay.find(
+                          s => s.user_id === p.user_id,
+                        );
+                        const didSubmit = !!sub;
+
+                        return (
+                          <DailySubmissionCard
+                            key={p.user_id + date}
+                            playerName={p.display_name}
+                            didSubmit={didSubmit}
+                            score={sub?.wordle_score}
+                            submissionText={sub?.submission_text}
+                          />
+                        );
+                      })}
+                    </View>
+                  );
+                });
+              })()}
+            </>
           )}
         </View>
       </ScrollView>
@@ -375,6 +420,20 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 16,
+  },
+  resultsDay: {
+    marginBottom: 16,
+  },
+  resultsDayTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  resultsDayDivider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row',

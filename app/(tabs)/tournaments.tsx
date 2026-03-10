@@ -29,6 +29,8 @@ export default function OngoingTournamentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [limitModalVisible, setLimitModalVisible] = useState(false);
   const [limitQuantity, setLimitQuantity] = useState(4);
+  const [showOngoing, setShowOngoing] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
 
   useEffect(() => {
     loadTournaments();
@@ -41,6 +43,7 @@ export default function OngoingTournamentsScreen() {
       .from('tournament_participants')
       .select('tournament_id')
       .eq('user_id', user.id);
+      
 
     const tournamentIds = participantData?.map(p => p.tournament_id) || [];
 
@@ -53,7 +56,7 @@ export default function OngoingTournamentsScreen() {
       .from('tournaments')
       .select('*')
       .in('id', tournamentIds)
-      .or(`status.in.(active,closed),and(status.eq.draft,created_by.neq.${user.id})`)
+      .in('status', ['active', 'closed'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -147,6 +150,16 @@ export default function OngoingTournamentsScreen() {
     return tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1);
   };
 
+  const now = new Date();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+  const ongoingTournaments = tournaments.filter(t => t.status === 'active');
+  const recentlyCompletedTournaments = tournaments.filter(t => {
+    if (t.status !== 'closed') return false;
+    const end = new Date(t.end_date);
+    return now.getTime() - end.getTime() < sevenDaysMs;
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -170,39 +183,107 @@ export default function OngoingTournamentsScreen() {
       >
         {loading ? (
           <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
-        ) : tournaments.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No ongoing tournaments</Text>
-            <Text style={styles.emptySubtext}>Join a tournament using a code to get started</Text>
-          </View>
         ) : (
-          <View style={styles.section}>
-            {tournaments.map(tournament => {
-              const start = new Date(tournament.start_date);
-              const end = new Date(tournament.end_date);
-              const durationDays = Math.round(
-                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-              );
-              const durationLabel = durationDays.toString();
-              const endDateLabel = end.toLocaleDateString();
+          <>
+            {ongoingTournaments.length === 0 && recentlyCompletedTournaments.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No tournaments</Text>
+                <Text style={styles.emptySubtext}>
+                  Join a tournament using a code to get started
+                </Text>
+              </View>
+            ) : null}
 
-              return (
-                <TournamentListItem
-                  key={tournament.id}
-                  title={tournament.created_by === user?.id ? 'Your Tournament' : tournament.name}
-                  statusLabel={getStatusText(tournament)}
-                  statusColor={getStatusColor(
-                    tournament.status,
-                    tournament.created_by === user?.id,
-                  )}
-                  durationLabel={durationLabel}
-                  endDateLabel={endDateLabel}
-                  secondaryText={`Code: ${tournament.join_code}`}
-                  onPress={() => router.push(`/tournament/${tournament.id}`)}
-                />
-              );
-            })}
-          </View>
+            {ongoingTournaments.length > 0 && (
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.sectionHeader}
+                  onPress={() => setShowOngoing(prev => !prev)}
+                >
+                  <Text style={styles.sectionHeaderText}>
+                    Ongoing Tournaments ({ongoingTournaments.length})
+                  </Text>
+                  <Text style={styles.sectionHeaderChevron}>{showOngoing ? '˄' : '˅'}</Text>
+                </TouchableOpacity>
+                <View style={styles.sectionDivider} />
+                {showOngoing &&
+                  ongoingTournaments.map(tournament => {
+                    const start = new Date(tournament.start_date);
+                    const end = new Date(tournament.end_date);
+                    const durationDays = Math.round(
+                      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+                    );
+                    const durationLabel = durationDays.toString();
+                    const endDateLabel = end.toLocaleDateString();
+
+                    return (
+                      <TournamentListItem
+                        key={tournament.id}
+                        title={
+                          tournament.created_by === user?.id
+                            ? 'Your Tournament'
+                            : tournament.name
+                        }
+                        statusLabel={getStatusText(tournament)}
+                        statusColor={getStatusColor(
+                          tournament.status,
+                          tournament.created_by === user?.id,
+                        )}
+                        durationLabel={durationLabel}
+                        endDateLabel={endDateLabel}
+                        secondaryText={`Code: ${tournament.join_code}`}
+                        onPress={() => router.push(`/tournament/${tournament.id}`)}
+                      />
+                    );
+                  })}
+              </View>
+            )}
+
+            {recentlyCompletedTournaments.length > 0 && (
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.sectionHeader}
+                  onPress={() => setShowCompleted(prev => !prev)}
+                >
+                  <Text style={styles.sectionHeaderText}>
+                    Recently Completed Tournaments ({recentlyCompletedTournaments.length})
+                  </Text>
+                  <Text style={styles.sectionHeaderChevron}>{showCompleted ? '˄' : '˅'}</Text>
+                </TouchableOpacity>
+                <View style={styles.sectionDivider} />
+                {showCompleted &&
+                  recentlyCompletedTournaments.map(tournament => {
+                    const start = new Date(tournament.start_date);
+                    const end = new Date(tournament.end_date);
+                    const durationDays = Math.round(
+                      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+                    );
+                    const durationLabel = durationDays.toString();
+                    const endDateLabel = end.toLocaleDateString();
+
+                    return (
+                      <TournamentListItem
+                        key={tournament.id}
+                        title={
+                          tournament.created_by === user?.id
+                            ? 'Your Tournament'
+                            : tournament.name
+                        }
+                        statusLabel={getStatusText(tournament)}
+                        statusColor={getStatusColor(
+                          tournament.status,
+                          tournament.created_by === user?.id,
+                        )}
+                        durationLabel={durationLabel}
+                        endDateLabel={endDateLabel}
+                        secondaryText={`Code: ${tournament.join_code}`}
+                        onPress={() => router.push(`/tournament/${tournament.id}`)}
+                      />
+                    );
+                  })}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -323,6 +404,26 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  sectionHeaderChevron: {
+    fontSize: 18,
+    color: '#6b7280',
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginBottom: 8,
   },
   tournamentCard: {
     backgroundColor: '#fff',

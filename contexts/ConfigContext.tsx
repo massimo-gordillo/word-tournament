@@ -12,6 +12,8 @@ export interface AppConfig {
   pointsGuess5: number;
   pointsGuess6: number;
   pointsMissed: number;
+  maxSubmissionRows: number;
+  cutoffHourEst: number;
   updatedAt: string;
 }
 
@@ -61,6 +63,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       pointsGuess5: row.points_guess_5,
       pointsGuess6: row.points_guess_6,
       pointsMissed: row.points_missed,
+      maxSubmissionRows: row.max_submission_rows,
+      cutoffHourEst: row.cutoff_hour_est,
       updatedAt: row.updated_at,
     });
 

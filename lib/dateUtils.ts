@@ -40,17 +40,17 @@ export function getYesterdayDateEST(): string {
   return `${year}-${month}-${day}`;
 }
 
-export function getTimeUntilCutoff(): { hours: number; minutes: number; seconds: number; isPastCutoff: boolean } {
+export function getTimeUntilCutoff(cutoffHourEst: number = 23): { hours: number; minutes: number; seconds: number; isPastCutoff: boolean } {
   const estNow = getDateInEST();
   const hours = estNow.getHours();
   const minutes = estNow.getMinutes();
   const seconds = estNow.getSeconds();
 
-  if (hours >= 23) {
+  if (hours >= cutoffHourEst) {
     return { hours: 0, minutes: 0, seconds: 0, isPastCutoff: true };
   }
 
-  const secondsUntilCutoff = (23 - hours) * 3600 - minutes * 60 - seconds;
+  const secondsUntilCutoff = (cutoffHourEst - hours) * 3600 - minutes * 60 - seconds;
   const hoursLeft = Math.floor(secondsUntilCutoff / 3600);
   const minutesLeft = Math.floor((secondsUntilCutoff % 3600) / 60);
   const secondsLeft = secondsUntilCutoff % 60;
