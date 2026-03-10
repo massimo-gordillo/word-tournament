@@ -6,12 +6,15 @@ import { supabase } from '@/lib/supabase';
 import { Plus, FileText, History, ChevronDown } from 'lucide-react-native';
 import { useAppConfig } from '@/contexts/ConfigContext';
 import { devLog } from '@/utils/logger';
+import { TournamentListItem } from '@/components/TournamentListItem';
 
 interface Tournament {
   id: string;
   name: string;
+  created_by: string;
   start_date: string;
   end_date: string;
+  duration: number;
   status: 'draft' | 'active' | 'closed';
   join_code: string;
   created_at: string;
@@ -251,26 +254,25 @@ export default function ManageTournamentsScreen() {
           <Text style={styles.emptySubtext}>Create a tournament to get started</Text>
         </View>
       ) : (
-        draftTournaments.map(tournament => (
-          <TouchableOpacity
-            key={tournament.id}
-            style={styles.tournamentCard}
-            onPress={() => router.push(`/draft-tournament/${tournament.id}`)}
-          >
-            <View style={styles.tournamentHeader}>
-            <Text style={styles.tournamentName}>
-              {tournament.name === `${userDisplayName}'s tournament` ? 'Your tournament' : tournament.name}
-            </Text>
-            <View style={[styles.statusBadge, { backgroundColor: '#f59e0b' }]}>
-              <Text style={styles.statusText}>DRAFT</Text>
-            </View>
-            </View>
-            <Text style={styles.tournamentDate}>
-              {new Date(tournament.start_date).toLocaleDateString()} - {new Date(tournament.end_date).toLocaleDateString()}
-            </Text>
-            <Text style={styles.joinCodeText}>Join Code: {tournament.join_code}</Text>
-          </TouchableOpacity>
-        ))
+        draftTournaments.map(tournament => {
+          const start = new Date(tournament.start_date);
+          const end = new Date(tournament.end_date);
+          const durationDays = Math.round(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+          );
+
+          return (
+            <TournamentListItem
+              key={tournament.id}
+              title={tournament.created_by === user?.id ? 'Your Tournament' : tournament.name}
+              statusLabel="Draft"
+              statusColor="#f59e0b"
+              durationLabel={durationDays.toString()}
+              secondaryText={`Join Code: ${tournament.join_code}`}
+              onPress={() => router.push(`/draft-tournament/${tournament.id}`)}
+            />
+          );
+        })
       )}
     </ScrollView>
   );
@@ -297,23 +299,24 @@ export default function ManageTournamentsScreen() {
           <Text style={styles.emptySubtext}>Completed tournaments will appear here</Text>
         </View>
       ) : (
-        pastTournaments.map(tournament => (
-          <TouchableOpacity
-            key={tournament.id}
-            style={styles.tournamentCard}
-            onPress={() => router.push(`/tournament/${tournament.id}`)}
-          >
-            <View style={styles.tournamentHeader}>
-              <Text style={styles.tournamentName}>{tournament.name}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: '#6b7280' }]}>
-                <Text style={styles.statusText}>CLOSED</Text>
-              </View>
-            </View>
-            <Text style={styles.tournamentDate}>
-              {new Date(tournament.start_date).toLocaleDateString()} - {new Date(tournament.end_date).toLocaleDateString()}
-            </Text>
-          </TouchableOpacity>
-        ))
+        pastTournaments.map(tournament => {
+          const start = new Date(tournament.start_date);
+          const end = new Date(tournament.end_date);
+          const durationDays = Math.round(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+          );
+
+          return (
+            <TournamentListItem
+              key={tournament.id}
+              title={tournament.name}
+              statusLabel="Closed"
+              statusColor="#6b7280"
+              durationLabel={durationDays.toString()}
+              onPress={() => router.push(`/tournament/${tournament.id}`)}
+            />
+          );
+        })
       )}
     </ScrollView>
   );

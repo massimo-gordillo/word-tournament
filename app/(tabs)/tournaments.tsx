@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useAppConfig } from '@/contexts/ConfigContext';
+import { TournamentListItem } from '@/components/TournamentListItem';
 import { Search } from 'lucide-react-native';
 
 interface Tournament {
@@ -52,8 +53,7 @@ export default function OngoingTournamentsScreen() {
       .from('tournaments')
       .select('*')
       .in('id', tournamentIds)
-      .in('status', ['active', 'closed', 'draft'])
-      .neq('created_by', user.id)
+      .or(`status.in.(active,closed),and(status.eq.draft,created_by.neq.${user.id})`)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -177,24 +177,31 @@ export default function OngoingTournamentsScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            {tournaments.map(tournament => (
-              <TouchableOpacity
-                key={tournament.id}
-                style={styles.tournamentCard}
-                onPress={() => router.push(`/tournament/${tournament.id}`)}
-              >
-                <View style={styles.tournamentHeader}>
-                  <Text style={styles.tournamentName}>{tournament.name}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(tournament.status, tournament.created_by === user?.id) }]}>
-                    <Text style={styles.statusText}>{getStatusText(tournament)}</Text>
-                  </View>
-                </View>
-                <Text style={styles.tournamentDate}>
-                  {new Date(tournament.start_date).toLocaleDateString()} - {new Date(tournament.end_date).toLocaleDateString()}
-                </Text>
-                <Text style={styles.joinCodeText}>Code: {tournament.join_code}</Text>
-              </TouchableOpacity>
-            ))}
+            {tournaments.map(tournament => {
+              const start = new Date(tournament.start_date);
+              const end = new Date(tournament.end_date);
+              const durationDays = Math.round(
+                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+              );
+              const durationLabel = durationDays.toString();
+              const endDateLabel = end.toLocaleDateString();
+
+              return (
+                <TournamentListItem
+                  key={tournament.id}
+                  title={tournament.created_by === user?.id ? 'Your Tournament' : tournament.name}
+                  statusLabel={getStatusText(tournament)}
+                  statusColor={getStatusColor(
+                    tournament.status,
+                    tournament.created_by === user?.id,
+                  )}
+                  durationLabel={durationLabel}
+                  endDateLabel={endDateLabel}
+                  secondaryText={`Code: ${tournament.join_code}`}
+                  onPress={() => router.push(`/tournament/${tournament.id}`)}
+                />
+              );
+            })}
           </View>
         )}
       </ScrollView>
