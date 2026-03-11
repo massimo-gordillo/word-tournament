@@ -5,7 +5,12 @@ const pad2 = (n: number) => n.toString().padStart(2, '0');
 const monthShortNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function toDate(input: DateInput): Date {
-  return input instanceof Date ? input : new Date(input);
+  if (input instanceof Date) return input;
+  if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    const [y, m, d] = input.split('-').map(Number);
+    return new Date(y, m - 1, d); // interpret as local calendar date
+  }
+  return new Date(input);
 }
 
 /** Default format: yyyy/MM/dd */

@@ -300,11 +300,20 @@ export default function TournamentDetailScreen() {
                 const startDateStr = tournament.start_date.slice(0, 10);
                 const endDateStr = tournament.end_date.slice(0, 10);
                 const todayStr = getTodayDateEST();
+                const yesterdayStr = getYesterdayDateEST();
 
-                // Clamp to tournament range; for completed tournaments, use end date,
-                // for active ones, use min(today, end).
-                const maxDateStr =
-                  isCompleted || todayStr > endDateStr ? endDateStr : todayStr;
+                // Determine last visible date:
+                // - Always show all fully past days.
+                // - Only show "today" when results are ready or the tournament is completed.
+                let maxDateStr: string | null = null;
+
+                if (isCompleted || resultsReady) {
+                  maxDateStr = todayStr <= endDateStr ? todayStr : endDateStr;
+                } else {
+                  const candidate =
+                    yesterdayStr <= endDateStr ? yesterdayStr : endDateStr;
+                  maxDateStr = candidate >= startDateStr ? candidate : null;
+                }
 
                 const days: string[] = [];
 
@@ -318,7 +327,7 @@ export default function TournamentDetailScreen() {
                   return `${year}-${month}-${day}`;
                 };
 
-                if (startDateStr <= maxDateStr) {
+                if (maxDateStr && startDateStr <= maxDateStr) {
                   let current = startDateStr;
                   while (current <= maxDateStr) {
                     days.push(current);
@@ -326,7 +335,10 @@ export default function TournamentDetailScreen() {
                   }
                 }
 
-                return days.map(date => {
+                // Show most recent day first
+                const orderedDays = [...days].reverse();
+
+                return orderedDays.map(date => {
                   const submissionsForDay = allSubmissions.filter(
                     s => s.submission_date === date,
                   );
