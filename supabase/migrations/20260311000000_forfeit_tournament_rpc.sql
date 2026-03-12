@@ -44,28 +44,27 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- ============================================================================
--- Forfeit tournament RPC: set forfeited and score -1; reject if already forfeited
+-- Core forfeit helper: can be called from RPC or cron
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION forfeit_tournament(p_tournament_id uuid)
+CREATE OR REPLACE FUNCTION forfeit_tournament_internal(
+  p_tournament_id uuid,
+  p_user_id uuid
+)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_uid uuid := auth.uid();
   v_updated integer;
+  v_remaining_active integer;
 BEGIN
-  IF v_uid IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated' USING ERRCODE = 'P0001';
-  END IF;
-
   -- Only allow forfeit if user is a participant and not already forfeited
   SELECT COUNT(*) INTO v_updated
   FROM tournament_participants
   WHERE tournament_id = p_tournament_id
-    AND user_id = v_uid
+    AND user_id = p_user_id
     AND forfeited = false;
 
   IF v_updated = 0 THEN
@@ -78,14 +77,48 @@ BEGIN
   UPDATE tournament_participants
   SET forfeited = true
   WHERE tournament_id = p_tournament_id
-    AND user_id = v_uid
+    AND user_id = p_user_id
     AND forfeited = false;
 
   -- Set tournament_scores to -1 (upsert so row exists)
   INSERT INTO tournament_scores (tournament_id, user_id, total_score, last_updated)
-  VALUES (p_tournament_id, v_uid, -1, now())
+  VALUES (p_tournament_id, p_user_id, -1, now())
   ON CONFLICT (tournament_id, user_id)
   DO UPDATE SET total_score = -1, last_updated = now();
+
+  -- If this forfeit leaves only one or zero non-forfeited participants, end the tournament immediately.
+  SELECT COUNT(*) INTO v_remaining_active
+  FROM tournament_participants
+  WHERE tournament_id = p_tournament_id
+    AND forfeited = false;
+
+  IF v_remaining_active <= 1 THEN
+    UPDATE tournaments
+    SET status = 'closed'
+    WHERE id = p_tournament_id
+      AND status = 'active';
+  END IF;
+END;
+$$;
+
+-- ============================================================================
+-- Forfeit tournament RPC: wrapper that uses auth.uid()
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION forfeit_tournament(p_tournament_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated' USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM forfeit_tournament_internal(p_tournament_id, v_uid);
 END;
 $$;
 

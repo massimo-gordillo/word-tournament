@@ -22,9 +22,25 @@ DO $$
 DECLARE
   today_date date;
   affected_users record;
+  v_auto_n integer;
+  first_streak_day date;
 BEGIN
   -- Get today's date in EST timezone
   today_date := (now() AT TIME ZONE 'America/New_York')::date;
+
+  -- Load auto-forfeit config: number of consecutive penalty days before auto-forfeit
+  SELECT auto_forfeit_consecutive_penalties
+  INTO v_auto_n
+  FROM app_config
+  ORDER BY updated_at DESC
+  LIMIT 1;
+
+  IF v_auto_n IS NULL OR v_auto_n < 1 THEN
+    v_auto_n := 3;
+  END IF;
+
+  -- First day of the streak window we care about (last N days including today)
+  first_streak_day := today_date - (v_auto_n - 1);
 
   -- ============================================================================
   -- STEP 1: Apply penalties for missing submissions
@@ -85,6 +101,38 @@ BEGIN
   DO UPDATE SET
     total_score = EXCLUDED.total_score,
     last_updated = EXCLUDED.last_updated;
+
+  -- ============================================================================
+  -- STEP 2b: Auto-forfeit users with N consecutive penalty days
+  -- ============================================================================
+
+  -- For each active tournament + participant:
+  -- - Tournament must have started on or after the first day of the streak window
+  -- - Participant must have a penalty submission for each day in [first_streak_day, today_date]
+  --   (we only check within that N-day window)
+  -- - Call the shared forfeit_tournament_internal helper so behavior stays consistent
+  WITH eligible_forfeit AS (
+    SELECT
+      tp.tournament_id,
+      tp.user_id
+    FROM tournament_participants tp
+    JOIN tournaments t ON t.id = tp.tournament_id
+    WHERE
+      t.status = 'active'
+      AND tp.forfeited = false
+      -- Tournament started on or after the first day of this streak window
+      AND t.start_date >= first_streak_day
+      -- User has a penalty submission on every day in the streak window
+      AND (
+        SELECT COUNT(DISTINCT ds.submission_date)
+        FROM daily_submissions ds
+        WHERE ds.user_id = tp.user_id
+          AND ds.submission_text = 'NO SUBMISSION - PENALTY'
+          AND ds.submission_date BETWEEN first_streak_day AND today_date
+      ) >= v_auto_n
+  )
+  PERFORM forfeit_tournament_internal(tournament_id, user_id)
+  FROM eligible_forfeit;
 
   -- ============================================================================
   -- STEP 3: Close tournaments that have ended
