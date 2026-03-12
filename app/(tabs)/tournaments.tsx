@@ -67,7 +67,7 @@ export default function OngoingTournamentsScreen() {
       .from('tournaments')
       .select('*')
       .in('id', tournamentIds)
-      .in('status', ['active', 'closed'])
+      .in('status', ['draft', 'active', 'closed'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -146,7 +146,8 @@ export default function OngoingTournamentsScreen() {
       case 'closed':
         return '#6b7280';
       case 'draft':
-        return isCreator ? '#f59e0b' : '#6b7280'; // Waiting = neutral
+        // Creator: Draft, Participant: Joined
+        return isCreator ? '#f59e0b' : '#6b7280';
       default:
         return '#6b7280';
     }
@@ -156,7 +157,7 @@ export default function OngoingTournamentsScreen() {
     if (tournament.status === 'active') return 'Active';
     if (tournament.status === 'closed') return 'Closed';
     if (tournament.status === 'draft') {
-      return tournament.created_by === user?.id ? 'Draft' : 'Waiting';
+      return tournament.created_by === user?.id ? 'Draft' : 'Joined';
     }
     return tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1);
   };
@@ -164,6 +165,9 @@ export default function OngoingTournamentsScreen() {
   const now = new Date();
   const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
+  const joinedDraftTournaments = tournaments.filter(
+    t => t.status === 'draft' && t.created_by !== user?.id,
+  );
   const ongoingTournaments = tournaments.filter(
     t => t.status === 'active' && !forfeitedTournamentIds.has(t.id),
   );
@@ -176,7 +180,7 @@ export default function OngoingTournamentsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Ongoing Tournaments</Text>
+        <Text style={styles.title}>Joined Tournaments</Text>
         <TouchableOpacity
           style={styles.joinButton}
           onPress={() => {
@@ -198,16 +202,16 @@ export default function OngoingTournamentsScreen() {
           <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
         ) : (
           <>
-            {ongoingTournaments.length === 0 && recentlyCompletedTournaments.length === 0 ? (
+            {ongoingTournaments.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No tournaments</Text>
+                <Text style={styles.emptyText}>No joined tournaments</Text>
                 <Text style={styles.emptySubtext}>
-                  Join a tournament using a code to get started
+                  Join a tournament using a code
                 </Text>
               </View>
             ) : null}
 
-            {ongoingTournaments.length > 0 && (
+            {(ongoingTournaments.length > 0 || joinedDraftTournaments.length > 0) && (
               <View style={styles.section}>
                 <TouchableOpacity
                   style={styles.sectionHeader}
@@ -220,7 +224,7 @@ export default function OngoingTournamentsScreen() {
                 </TouchableOpacity>
                 <View style={styles.sectionDivider} />
                 {showOngoing &&
-                  ongoingTournaments.map(tournament => {
+                  [...joinedDraftTournaments, ...ongoingTournaments].map(tournament => {
                     const start = new Date(tournament.start_date);
                     const end = new Date(tournament.end_date);
                     const calendarDays =
