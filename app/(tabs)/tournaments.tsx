@@ -146,8 +146,9 @@ export default function OngoingTournamentsScreen() {
       case 'closed':
         return '#6b7280';
       case 'draft':
+        return '#f59e0b';
         // Creator: Draft, Participant: Joined
-        return isCreator ? '#f59e0b' : '#6b7280';
+        //return isCreator ? '#f59e0b' : '#6b7280';
       default:
         return '#6b7280';
     }
@@ -171,6 +172,7 @@ export default function OngoingTournamentsScreen() {
   const ongoingTournaments = tournaments.filter(
     t => t.status === 'active' && !forfeitedTournamentIds.has(t.id),
   );
+  const totalOngoingCount = joinedDraftTournaments.length + ongoingTournaments.length;
   const recentlyCompletedTournaments = tournaments.filter(t => {
     if (t.status !== 'closed' || forfeitedTournamentIds.has(t.id)) return false;
     const end = new Date(t.end_date);
@@ -202,7 +204,7 @@ export default function OngoingTournamentsScreen() {
           <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
         ) : (
           <>
-            {ongoingTournaments.length === 0 ? (
+            {totalOngoingCount === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No joined tournaments</Text>
                 <Text style={styles.emptySubtext}>
@@ -211,14 +213,14 @@ export default function OngoingTournamentsScreen() {
               </View>
             ) : null}
 
-            {(ongoingTournaments.length > 0 || joinedDraftTournaments.length > 0) && (
+            {totalOngoingCount > 0 && (
               <View style={styles.section}>
                 <TouchableOpacity
                   style={styles.sectionHeader}
                   onPress={() => setShowOngoing(prev => !prev)}
                 >
                   <Text style={styles.sectionHeaderText}>
-                    Ongoing Tournaments ({ongoingTournaments.length})
+                    Ongoing Tournaments ({totalOngoingCount})
                   </Text>
                   <Text style={styles.sectionHeaderChevron}>{showOngoing ? '˄' : '˅'}</Text>
                 </TouchableOpacity>
