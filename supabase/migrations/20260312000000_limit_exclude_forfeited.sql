@@ -144,11 +144,11 @@ BEGIN
   LIMIT 1;
 
   IF v_max_tournaments IS NULL THEN
-    v_max_tournaments := 4;
+    v_max_tournaments := 5;
   END IF;
 
   IF v_max_participants IS NULL THEN
-    v_max_participants := 15;
+    v_max_participants := 10;
   END IF;
 
   SELECT id
