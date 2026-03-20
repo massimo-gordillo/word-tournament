@@ -1,23 +1,14 @@
 /*
-  # Forfeit tournament RPC and forfeited score behavior
+  # Ensure tournaments auto-close when only one active participant remains
 
-  - Adds forfeit_tournament(p_tournament_id) RPC that:
-    - Rejects if caller is not a participant or has already forfeited (returns error).
-    - Sets tournament_participants.forfeited = true.
-    - Ensures that:
-      - If the user has not submitted for "today" (EST) and the tournament is active
-        and within its date range, a -2 penalty submission is created for today
-        (with the same negative label used for other penalties).
-      - Future days continue to accrue -2 penalties via the daily cron job,
-        even after forfeit.
-    - Total tournament score is always the sum of daily scores (including -2),
-      while forfeited participants remain visually marked as forfeited in the UI.
+  Why:
+  - Some environments can drift when older migration files are edited after they have
+    already been applied.
+  - This migration re-applies the forfeit RPC logic and includes a one-time backfill
+    for tournaments that are currently stuck in 'active' with <= 1 non-forfeited participant.
 */
 
--- ============================================================================
--- Use -1 for forfeited in recalculate_tournament_scores
--- ============================================================================
-
+-- Keep score calculation based on summed daily submissions (including penalties)
 CREATE OR REPLACE FUNCTION recalculate_tournament_scores(
   p_tournament_id uuid,
   p_submission_date date
@@ -28,7 +19,6 @@ BEGIN
   SELECT
     tp.tournament_id,
     tp.user_id,
-    -- Always sum daily scores (including -2 penalties), regardless of forfeit status
     COALESCE(SUM(ds.wordle_score), 0) AS total_score,
     now()
   FROM tournament_participants tp
@@ -47,10 +37,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- ============================================================================
--- Core forfeit helper: can be called from RPC or cron
--- ============================================================================
-
 CREATE OR REPLACE FUNCTION forfeit_tournament_internal(
   p_tournament_id uuid,
   p_user_id uuid
@@ -66,7 +52,6 @@ DECLARE
   v_today date;
   v_tournament record;
 BEGIN
-  -- Only allow forfeit if user is a participant and not already forfeited
   SELECT COUNT(*) INTO v_updated
   FROM tournament_participants
   WHERE tournament_id = p_tournament_id
@@ -79,14 +64,12 @@ BEGIN
             MESSAGE = 'You have already forfeited this tournament or are not a participant.';
   END IF;
 
-  -- Mark as forfeited
   UPDATE tournament_participants
   SET forfeited = true
   WHERE tournament_id = p_tournament_id
     AND user_id = p_user_id
     AND forfeited = false;
 
-  -- Load tournament info and today's date in EST
   v_today := (now() AT TIME ZONE 'America/New_York')::date;
 
   SELECT id, start_date, end_date, status
@@ -94,8 +77,6 @@ BEGIN
   FROM tournaments
   WHERE id = p_tournament_id;
 
-  -- If the tournament is active, today is within its date range, and the user
-  -- has not submitted today, create a -2 penalty submission for today.
   IF v_tournament.status = 'active'
      AND v_today >= v_tournament.start_date
      AND v_today <= v_tournament.end_date THEN
@@ -109,11 +90,9 @@ BEGIN
       VALUES (p_user_id, v_today, 'NO SUBMISSION - PENALTY', -2, now());
     END IF;
 
-    -- Recalculate scores up to today so standings reflect the new penalty
     PERFORM recalculate_tournament_scores(p_tournament_id, v_today);
   END IF;
 
-  -- If this forfeit leaves only one or zero non-forfeited participants, end the tournament immediately.
   SELECT COUNT(*) INTO v_remaining_active
   FROM tournament_participants
   WHERE tournament_id = p_tournament_id
@@ -127,10 +106,6 @@ BEGIN
   END IF;
 END;
 $$;
-
--- ============================================================================
--- Forfeit tournament RPC: wrapper that uses auth.uid()
--- ============================================================================
 
 CREATE OR REPLACE FUNCTION forfeit_tournament(p_tournament_id uuid)
 RETURNS void
@@ -149,5 +124,15 @@ BEGIN
 END;
 $$;
 
--- Grant execute to authenticated users
 GRANT EXECUTE ON FUNCTION forfeit_tournament(uuid) TO authenticated;
+
+-- Backfill: close any active tournament that already has <=1 non-forfeited participant.
+UPDATE tournaments t
+SET status = 'closed'
+WHERE t.status = 'active'
+  AND (
+    SELECT COUNT(*)
+    FROM tournament_participants tp
+    WHERE tp.tournament_id = t.id
+      AND tp.forfeited = false
+  ) <= 1;

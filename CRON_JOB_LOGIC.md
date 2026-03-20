@@ -47,7 +47,8 @@ BEGIN
   -- ============================================================================
 
   -- For each user in an active tournament who hasn't submitted today,
-  -- create a penalty submission with -2 points
+  -- create a penalty submission with -2 points (including forfeited users,
+  -- who continue to accrue -2 penalties for each remaining day)
   INSERT INTO daily_submissions (user_id, submission_date, submission_text, wordle_score, submitted_at)
   SELECT DISTINCT
     tp.user_id,
@@ -63,8 +64,6 @@ BEGIN
     -- Today is within tournament date range
     AND today_date >= t.start_date
     AND today_date <= t.end_date
-    -- User has not forfeited
-    AND tp.forfeited = false
     -- User has not submitted today
     AND NOT EXISTS (
       SELECT 1 FROM daily_submissions ds
@@ -82,12 +81,8 @@ BEGIN
   SELECT
     tp.tournament_id,
     tp.user_id,
-    CASE
-      -- If forfeited, score is -1 (displayed as "Forfeited")
-      WHEN tp.forfeited THEN -1
-      -- Otherwise sum all daily scores within tournament date range
-      ELSE COALESCE(SUM(ds.wordle_score), 0)
-    END as total_score,
+    -- Sum all daily scores within tournament date range (including -2 penalties)
+    COALESCE(SUM(ds.wordle_score), 0) AS total_score,
     now()
   FROM tournament_participants tp
   JOIN tournaments t ON t.id = tp.tournament_id

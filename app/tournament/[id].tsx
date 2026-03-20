@@ -154,7 +154,9 @@ export default function TournamentDetailScreen() {
       const formattedScores = participantDetails
         .map(p => ({
           user_id: p.user_id,
-          total_score: p.forfeited ? -1 : totals.get(p.user_id) || 0,
+          // Always use the summed total score (including any -2 penalties);
+          // forfeited players are still visually marked as forfeited.
+          total_score: totals.get(p.user_id) || 0,
           display_name: p.display_name,
           forfeited: p.forfeited,
         }))
@@ -189,6 +191,7 @@ export default function TournamentDetailScreen() {
   const todaySubmittedIds = new Set(todaySubmissions.map(s => s.user_id));
 
   const isCompleted = tournament.status === 'closed';
+  const startedToday = getTodayDateEST() === tournament.start_date;
 
   const handleBack = () => {
     if (router.canGoBack && router.canGoBack()) {
@@ -245,7 +248,7 @@ export default function TournamentDetailScreen() {
   const handleForfeitPress = () => {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(
-        'Are you sure you want to forfeit this tournament? This will set your score to -1 and cannot be undone.',
+        'Are you sure you want to forfeit this tournament? This will mark you as forfeited and you will receive a -2 penalty for every remaining day of this tournament. This cannot be undone.',
       );
       if (confirmed) {
         handleConfirmForfeit();
@@ -255,7 +258,7 @@ export default function TournamentDetailScreen() {
 
     Alert.alert(
       'Forfeit Tournament',
-      'Are you sure you want to forfeit this tournament? This will set your score to -1 and cannot be undone.',
+      'Are you sure you want to forfeit this tournament? This will mark you as forfeited and you will receive a -2 penalty for every remaining day of this tournament. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Forfeit', style: 'destructive', onPress: handleConfirmForfeit },
@@ -271,9 +274,10 @@ export default function TournamentDetailScreen() {
         </TouchableOpacity>
         <View style={styles.headerText}>
           <Text style={styles.title}>{tournament.name}</Text>
-          <Text style={styles.headerDate}>{`Ends on ${formatDateShort(
-            tournament.end_date,
-          )}`}</Text>
+          <Text style={styles.headerDate}>{tournament.status === 'active' ? 
+          `Ends on: ${formatDateShort(tournament.end_date)}` :
+          `Ended on: ${formatDateShort(tournament.end_date)}`
+        }</Text>
         </View>
       </View>
 
@@ -301,6 +305,9 @@ export default function TournamentDetailScreen() {
           </View>
         )}
 
+        
+
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Trophy size={20} color="#1a1a1a" />
@@ -309,6 +316,8 @@ export default function TournamentDetailScreen() {
                 ? 'Final Standings'
                 : resultsReady
                 ? "Today's Leaderboard"
+                : startedToday
+                ? "Leaderboard (Waiting)"
                 : "Yesterday's Leaderboard (Waiting)"}
             </Text>
           </View>
@@ -325,19 +334,20 @@ export default function TournamentDetailScreen() {
                 </View>
                 <View style={styles.scoreInfo}>
                   <Text style={styles.scoreName}>
-                  {score.display_name}{score.user_id === user?.id ? ' (You)' : ''}
-                    {score.forfeited && <Text style={styles.forfeitedText}> (Forfeited)</Text>}
+                    {score.display_name}
+                    {score.user_id === user?.id ? ' (You)' : ''}
+                    {score.forfeited && <Text style={styles.forfeitedText}> (Forfeit)</Text>}
                   </Text>
                 </View>
                 <Text style={styles.scorePoints}>
-                  {score.forfeited ? 'Forfeited' : `${score.total_score} pts`}
+                  {`${score.total_score} pts`}
                 </Text>
               </View>
             ))
           )}
         </View>
 
-        {participants.length > 0 && (
+        {participants.length > 0 && tournament.status === 'active' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Players</Text>
             {participants.map(p => (
@@ -351,9 +361,11 @@ export default function TournamentDetailScreen() {
 
         {/* All Results section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>All Results</Text>
+          <Text style={styles.sectionTitle}>All Submissions</Text>
           {participants.length === 0 ? (
             <Text style={styles.emptyText}>No players in this tournament</Text>
+          ) : allSubmissions.length === 0 ? (
+            <Text style={styles.emptyText}>No submissions yet</Text>
           ) : (
             <>
               {(() => {
