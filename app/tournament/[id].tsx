@@ -40,7 +40,7 @@ export default function TournamentDetailScreen() {
   const [todaySubmissions, setTodaySubmissions] = useState<Submission[]>([]);
   const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
   const [participants, setParticipants] = useState<
-    { user_id: string; display_name: string; forfeited: boolean }[]
+    { user_id: string; display_name: string; forfeited: boolean; forfeited_at_date: string | null }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [resultsReady, setResultsReady] = useState(false);
@@ -73,7 +73,7 @@ export default function TournamentDetailScreen() {
 
     const { data: allParticipants } = await supabase
       .from('tournament_participants')
-      .select('user_id, forfeited')
+      .select('user_id, forfeited, forfeited_at_date')
       .eq('tournament_id', id);
 
     if (allParticipants) {
@@ -91,6 +91,7 @@ export default function TournamentDetailScreen() {
         user_id: p.user_id,
         display_name: usersMap.get(p.user_id) || 'Unknown',
         forfeited: forfeitedMap.get(p.user_id) || false,
+        forfeited_at_date: p.forfeited_at_date ?? null,
       }));
 
       setParticipants(participantDetails);
@@ -141,6 +142,8 @@ export default function TournamentDetailScreen() {
         baseCutoff < tournamentData.end_date ? baseCutoff : tournamentData.end_date;
 
       const totals = new Map<string, number>();
+      const submissionScoreByUserAndDay = new Map<string, number>();
+
       allSubmissionsWithNames
         .filter(
           s =>
@@ -148,8 +151,47 @@ export default function TournamentDetailScreen() {
             s.submission_date <= cutoffDate,
         )
         .forEach(s => {
-          totals.set(s.user_id, (totals.get(s.user_id) || 0) + s.wordle_score);
+          submissionScoreByUserAndDay.set(
+            `${s.user_id}:${s.submission_date}`,
+            s.wordle_score,
+          );
         });
+
+      const addOneDay = (dateStr: string) => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        dt.setDate(dt.getDate() + 1);
+        const year = dt.getFullYear();
+        const month = String(dt.getMonth() + 1).padStart(2, '0');
+        const day = String(dt.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      participantDetails.forEach(p => {
+        let total = 0;
+        let day = tournamentData.start_date;
+
+        while (day <= cutoffDate) {
+          const isForfeitPenaltyDay =
+            p.forfeited &&
+            p.forfeited_at_date != null &&
+            day >= p.forfeited_at_date;
+
+          if (isForfeitPenaltyDay) {
+            // Once forfeited, this tournament always uses -2 from forfeiture day onward.
+            total += -2;
+          } else {
+            const scoreForDay = submissionScoreByUserAndDay.get(`${p.user_id}:${day}`);
+            if (typeof scoreForDay === 'number') {
+              total += scoreForDay;
+            }
+          }
+
+          day = addOneDay(day);
+        }
+
+        totals.set(p.user_id, total);
+      });
 
       const formattedScores = participantDetails
         .map(p => ({
@@ -425,15 +467,23 @@ export default function TournamentDetailScreen() {
                         const sub = submissionsForDay.find(
                           s => s.user_id === p.user_id,
                         );
-                        const didSubmit = !!sub;
+                        const isForfeitPenaltyDay =
+                          p.forfeited &&
+                          p.forfeited_at_date != null &&
+                          date >= p.forfeited_at_date;
+                        const didSubmit = !!sub && !isForfeitPenaltyDay;
+                        const score = isForfeitPenaltyDay ? -2 : sub?.wordle_score;
+                        const submissionText = isForfeitPenaltyDay
+                          ? undefined
+                          : sub?.submission_text;
 
                         return (
                           <DailySubmissionCard
                             key={p.user_id + date}
                             playerName={p.display_name}
                             didSubmit={didSubmit}
-                            score={sub?.wordle_score}
-                            submissionText={sub?.submission_text}
+                            score={score}
+                            submissionText={submissionText}
                           />
                         );
                       })}

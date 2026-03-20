@@ -55,6 +55,7 @@ export default function DraftTournamentScreen() {
   const [discarding, setDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     loadTournamentData();
@@ -157,32 +158,39 @@ export default function DraftTournamentScreen() {
     if (!tournament || participants.length < 2) return;
 
     setStarting(true);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const originalStartDate = new Date(tournament.start_date);
-    const originalEndDate = new Date(tournament.end_date);
-    const calendarDays =
-      Math.round((originalEndDate.getTime() - originalStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-    const newEndDate = new Date(today);
-    newEndDate.setDate(newEndDate.getDate() + calendarDays - 1);
-
-    const { error } = await supabase
-      .from('tournaments')
-      .update({
-        status: 'active',
-        start_date: today.toISOString(),
-        end_date: newEndDate.toISOString(),
-      })
-      .eq('id', tournament.id);
+    const { error } = await supabase.rpc('start_draft_tournament', {
+      p_tournament_id: tournament.id,
+    });
 
     setStarting(false);
 
-    if (!error) {
-      router.replace(`/tournament/${tournament.id}`);
+    if (error) {
+      const message = error.message || '';
+      if (message.includes('NOT_ENOUGH_PLAYERS')) {
+        Alert.alert(
+          'Not enough players',
+          'At least 2 players must still be in the tournament to start it.',
+        );
+        await loadTournamentData();
+        return;
+      }
+      if (message.includes('TOURNAMENT_NOT_DRAFT')) {
+        Alert.alert('Unable to start', 'This tournament is no longer in draft status.');
+        await loadTournamentData();
+        return;
+      }
+      if (message.includes('ONLY_CREATOR_CAN_START')) {
+        Alert.alert('Permission denied', 'Only the tournament creator can start this tournament.');
+        await loadTournamentData();
+        return;
+      }
+
+      Alert.alert('Unable to start tournament', 'Please refresh and try again.');
+      await loadTournamentData();
+      return;
     }
+
+    router.replace(`/tournament/${tournament.id}`);
   };
 
   const handleDiscardTournament = () => {
@@ -204,6 +212,42 @@ export default function DraftTournamentScreen() {
         }
         router.replace('/(tabs)/manage');
       }
+    );
+  };
+
+  const handleLeaveTournament = () => {
+    if (!tournament || !user?.id) return;
+
+    const confirmAndLeave = async () => {
+      setLeaving(true);
+      const { error } = await supabase.rpc('leave_draft_tournament', {
+        p_tournament_id: tournament.id,
+      });
+      setLeaving(false);
+
+      if (error) {
+        Alert.alert('Unable to leave', error.message || 'Could not leave this tournament.');
+        return;
+      }
+
+      router.replace('/(tabs)/tournaments');
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+      const ok = window.confirm('Leave this draft tournament?');
+      if (ok) {
+        void confirmAndLeave();
+      }
+      return;
+    }
+
+    Alert.alert(
+      'Leave tournament',
+      'Are you sure you want to leave this draft tournament?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Leave', style: 'destructive', onPress: () => void confirmAndLeave() },
+      ],
     );
   };
 
@@ -308,6 +352,17 @@ export default function DraftTournamentScreen() {
               ))
             )}
           </View>
+          <TouchableOpacity
+            style={[styles.leaveButton, leaving && styles.leaveButtonDisabled]}
+            onPress={handleLeaveTournament}
+            disabled={leaving}
+          >
+            {leaving ? (
+              <ActivityIndicator color="#ef4444" />
+            ) : (
+              <Text style={styles.leaveButtonText}>Leave Tournament</Text>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </View>
     );
@@ -695,5 +750,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  leaveButton: {
+    borderWidth: 2,
+    borderColor: '#ef4444',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  leaveButtonDisabled: {
+    opacity: 0.7,
+  },
+  leaveButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

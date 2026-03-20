@@ -52,7 +52,7 @@ export function DailySubmissionCard({
             {typeof score === 'number' ? `${score} pts` : ''}
           </Text>
         </View>
-        {!didSubmit && <Text style={styles.statusText}>Did not submit (-2)</Text>}
+        {!didSubmit && <Text style={styles.statusText}>No submission (-2)</Text>}
         {didSubmit && submissionText ? renderWordleGrid(submissionText) : null}
       </View>
     </View>
