@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { formatDateOrToday } from '@/utils/dateUtils';
+import { formatDateOrToday } from '@/lib/dateUtils';
 
 type Variant = 'screen' | 'chat';
 

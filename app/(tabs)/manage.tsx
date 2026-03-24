@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Plus, FileText, History, ChevronDown } from 'lucide-react-native';
 import { useAppConfig } from '@/contexts/ConfigContext';
 import { devLog } from '@/utils/logger';
-import { formatDateShort } from '@/utils/dateUtils';
+import { formatDateShort } from '@/lib/dateUtils';
 import { TournamentListItem } from '@/components/TournamentListItem';
 
 interface Tournament {

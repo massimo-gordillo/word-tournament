@@ -65,11 +65,9 @@ export default function DailySubmissionScreen() {
       .eq('submission_date', today)
       .maybeSingle();
 
-    if (error || !data) {
-      return;
+    if (!error && data) {
+      setTodaySubmission(data);
     }
-
-    setTodaySubmission(data);
   };
 
   const parseWordle = (text: string) => {
@@ -293,20 +291,19 @@ export default function DailySubmissionScreen() {
       devLog('handleSubmit: backend error', { message, dbError });
       if (message.toLowerCase().includes('invalid wordle grid')) {
         setError('Invalid Wordle grid. Please paste the complete result including the emoji rows.');
-        return;
+      } else {
+        setError(message);
       }
-      setError(message);
-      return;
+    } else {
+      devLog('handleSubmit: submission saved', { data });
+      await insertResultChatForTournaments(user!.id, today, data.id);
+      setTodaySubmission({
+        submission_text: data.submission_text,
+        wordle_score: data.wordle_score,
+        submitted_at: data.submitted_at,
+      });
+      setSubmissionText('');
     }
-
-    devLog('handleSubmit: submission saved', { data });
-    await insertResultChatForTournaments(user!.id, today, data.id);
-    setTodaySubmission({
-      submission_text: data.submission_text,
-      wordle_score: data.wordle_score,
-      submitted_at: data.submitted_at,
-    });
-    setSubmissionText('');
   };
 
   if (todaySubmission) {

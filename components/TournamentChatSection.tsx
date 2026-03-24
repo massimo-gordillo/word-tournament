@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Lock, Send } from 'lucide-react-native';
 import { DailySubmissionCard } from '@/components/DailySubmissionCard';
-import { formatDateShort } from '@/utils/dateUtils';
 
 /** Must match placeholder written for `tournament_chat.message` when `message_type` is `result`. */
 const RESULT_MESSAGE_PLACEHOLDER = 'result';
@@ -118,7 +117,7 @@ export function TournamentChatSection({
                         variant="chat"
                         dateLabel={
                           msg.submission_date
-                            ? formatDateShort(msg.submission_date)
+                            ? msg.submission_date.slice(0, 10)
                             : undefined
                         }
                         playerName={msg.display_name}

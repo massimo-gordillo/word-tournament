@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAppConfig } from '@/contexts/ConfigContext';
 import { TournamentListItem } from '@/components/TournamentListItem';
 import { Search } from 'lucide-react-native';
-import { formatDateShort } from '@/utils/dateUtils';
+import { formatDateShort } from '@/lib/dateUtils';
 
 interface Tournament {
   id: string;
