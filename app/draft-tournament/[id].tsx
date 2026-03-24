@@ -70,10 +70,13 @@ export default function DraftTournamentScreen() {
       .eq('id', id)
       .maybeSingle();
 
-    if (tournamentData) {
-      setTournament(tournamentData);
+    if (!tournamentData) {
+      await loadParticipants();
+      setLoading(false);
+      return;
     }
 
+    setTournament(tournamentData);
     await loadParticipants();
     setLoading(false);
   };
@@ -86,28 +89,30 @@ export default function DraftTournamentScreen() {
       .select('id, user_id')
       .eq('tournament_id', id);
 
-    if (participantData) {
-      const userIds = participantData.map(p => p.user_id);
-      if (userIds.length === 0) {
-        setParticipants([]);
-        return;
-      }
-
-      const { data: usersData } = await supabase
-        .from('users')
-        .select('id, display_name')
-        .in('id', userIds);
-
-      const usersMap = new Map(usersData?.map(u => [u.id, u.display_name]));
-
-      const formattedParticipants = participantData.map(p => ({
-        id: p.id,
-        user_id: p.user_id,
-        display_name: usersMap.get(p.user_id) || 'Unknown',
-      }));
-
-      setParticipants(formattedParticipants);
+    if (!participantData) {
+      return;
     }
+
+    const userIds = participantData.map(p => p.user_id);
+    if (userIds.length === 0) {
+      setParticipants([]);
+      return;
+    }
+
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, display_name')
+      .in('id', userIds);
+
+    const usersMap = new Map(usersData?.map(u => [u.id, u.display_name]));
+
+    const formattedParticipants = participantData.map(p => ({
+      id: p.id,
+      user_id: p.user_id,
+      display_name: usersMap.get(p.user_id) || 'Unknown',
+    }));
+
+    setParticipants(formattedParticipants);
   };
 
   const handleKickParticipant = (participant: Participant) => {
@@ -210,6 +215,7 @@ export default function DraftTournamentScreen() {
           setDiscardError(error.message || 'Failed to discard tournament');
           return;
         }
+
         router.replace('/(tabs)/manage');
       }
     );

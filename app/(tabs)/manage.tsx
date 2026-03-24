@@ -68,9 +68,11 @@ export default function ManageTournamentsScreen() {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (data) {
-      setUserDisplayName(data.display_name);
+    if (!data) {
+      return;
     }
+
+    setUserDisplayName(data.display_name);
   };
 
   const loadDraftTournaments = async () => {
@@ -84,10 +86,12 @@ export default function ManageTournamentsScreen() {
       .eq('status', 'draft')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setDraftTournaments(data);
+    if (error || !data) {
+      setLoading(false);
+      return;
     }
 
+    setDraftTournaments(data);
     setLoading(false);
   };
 
@@ -156,23 +160,26 @@ export default function ManageTournamentsScreen() {
 
     const { data, error } = await supabase.rpc('get_tournament_limit_info');
 
-    if (!error && data && data.length > 0) {
-      const current = (data[0] as any).current_count ?? 0;
-      const max = (data[0] as any).max_limit ?? 4;
-
-      if (current >= max) {
-        devLog('Create tournament blocked by limit', {
-          currentTournaments: current,
-          maxTournamentsAllowed: max,
-          appConfig: config,
-        });
-        setLimitQuantity(max);
-        setLimitModalVisible(true);
-        return;
-      }
+    if (error || !data || data.length === 0) {
+      onAllowed();
+      return;
     }
 
-    onAllowed();
+    const current = (data[0] as any).current_count ?? 0;
+    const max = (data[0] as any).max_limit ?? 4;
+
+    if (current < max) {
+      onAllowed();
+      return;
+    }
+
+    devLog('Create tournament blocked by limit', {
+      currentTournaments: current,
+      maxTournamentsAllowed: max,
+      appConfig: config,
+    });
+    setLimitQuantity(max);
+    setLimitModalVisible(true);
   };
 
   const handleCreateTournament = async () => {
@@ -208,9 +215,9 @@ export default function ManageTournamentsScreen() {
       if (message.includes('maximum number of tournaments')) {
         const max = config?.maxTournamentsPerUser ?? 4;
         setError(`You are already in the maximum number of tournaments (${max})`);
-      } else {
-        setError(message);
+        return;
       }
+      setError(message);
       return;
     }
 

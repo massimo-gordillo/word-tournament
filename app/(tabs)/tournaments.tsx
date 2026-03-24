@@ -70,10 +70,12 @@ export default function OngoingTournamentsScreen() {
       .in('status', ['draft', 'active', 'closed'])
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setTournaments(data);
+    if (error || !data) {
+      setLoading(false);
+      return;
     }
 
+    setTournaments(data);
     setLoading(false);
   };
 
@@ -88,18 +90,21 @@ export default function OngoingTournamentsScreen() {
 
     const { data, error } = await supabase.rpc('get_tournament_limit_info');
 
-    if (!error && data && data.length > 0) {
-      const current = (data[0] as any).current_count ?? 0;
-      const max = (data[0] as any).max_limit ?? 4;
-
-      if (current >= max) {
-        setLimitQuantity(max);
-        setLimitModalVisible(true);
-        return;
-      }
+    if (error || !data || data.length === 0) {
+      onAllowed();
+      return;
     }
 
-    onAllowed();
+    const current = (data[0] as any).current_count ?? 0;
+    const max = (data[0] as any).max_limit ?? 4;
+
+    if (current < max) {
+      onAllowed();
+      return;
+    }
+
+    setLimitQuantity(max);
+    setLimitModalVisible(true);
   };
 
   const handleJoinTournament = async () => {
@@ -121,22 +126,29 @@ export default function OngoingTournamentsScreen() {
       const message = error.message || 'Unable to join tournament';
       if (message.includes('already in this tournament')) {
         setJoinError('You are already in this tournament');
-      } else if (message.includes('maximum number of tournaments')) {
+        return;
+      }
+      if (message.includes('maximum number of tournaments')) {
         const max = config?.maxTournamentsPerUser ?? 4;
         setJoinError(`You are already in the maximum number of tournaments (${max})`);
-      } else if (message.includes('tournament is full')) {
+        return;
+      }
+      if (message.includes('tournament is full')) {
         const maxPlayers = config?.maxParticipantsPerTournament ?? 15;
         setJoinError(`This tournament is full (${maxPlayers} players max)`);
-      } else if (message.includes('Invalid or inactive join code')) {
-        setJoinError('Invalid join code');
-      } else {
-        setJoinError(message);
+        return;
       }
-    } else {
-      setJoinModalVisible(false);
-      setJoinCode('');
-      loadTournaments();
+      if (message.includes('Invalid or inactive join code')) {
+        setJoinError('Invalid join code');
+        return;
+      }
+      setJoinError(message);
+      return;
     }
+
+    setJoinModalVisible(false);
+    setJoinCode('');
+    loadTournaments();
   };
 
   const getStatusColor = (status: string, isCreator?: boolean) => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { formatDateOrToday } from '@/utils/dateUtils';
 
 type Variant = 'screen' | 'chat';
 
@@ -14,7 +15,7 @@ type Props = {
 
 export function DailySubmissionCard({
   variant = 'screen',
-  dateLabel: _dateLabel,
+  dateLabel,
   playerName,
   didSubmit,
   score,
@@ -61,6 +62,7 @@ export function DailySubmissionCard({
         </View>
         {!didSubmit && <Text style={styles.statusText}>No submission (-2)</Text>}
         {didSubmit && submissionText ? renderWordleGrid(submissionText) : null}
+        {dateLabel ? <Text style={styles.dateLabel}>{formatDateOrToday(dateLabel)}</Text> : null}
       </View>
     </View>
   );
@@ -96,6 +98,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 2,
     elevation: 1,
+  },
+  dateLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 6,
   },
   headerRow: {
     flexDirection: 'row',

@@ -63,9 +63,13 @@ export default function StatisticsScreen() {
         .eq('tournament_id', tournament.tournament_id)
         .order('total_score', { ascending: false });
 
-      if (allScores && allScores.length > 0 && allScores[0].total_score === tournament.total_score) {
-        wins++;
+      if (!allScores || allScores.length === 0) {
+        continue;
       }
+      if (allScores[0].total_score !== tournament.total_score) {
+        continue;
+      }
+      wins++;
     }
 
     const { data: participations } = await supabase

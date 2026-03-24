@@ -9,31 +9,31 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 // Custom storage adapter for secure token storage
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string) => {
-    if (Platform.OS === 'web') {
-      if (typeof localStorage === 'undefined') {
-        return null;
-      }
-      return localStorage.getItem(key);
+    if (Platform.OS !== 'web') {
+      return SecureStore.getItemAsync(key);
     }
-    return SecureStore.getItemAsync(key);
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    return localStorage.getItem(key);
   },
   setItem: async (key: string, value: string) => {
-    if (Platform.OS === 'web') {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(key, value);
-      }
+    if (Platform.OS !== 'web') {
+      SecureStore.setItemAsync(key, value);
       return;
     }
-    SecureStore.setItemAsync(key, value);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
   },
   removeItem: async (key: string) => {
-    if (Platform.OS === 'web') {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(key);
-      }
+    if (Platform.OS !== 'web') {
+      SecureStore.deleteItemAsync(key);
       return;
     }
-    SecureStore.deleteItemAsync(key);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
   },
 };
 

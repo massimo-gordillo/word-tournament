@@ -83,11 +83,12 @@ export default function TournamentDetailScreen() {
       .eq('id', id)
       .single();
 
+    if (tournamentData?.status === 'draft') {
+      router.replace(`/draft-tournament/${id}`);
+      return;
+    }
+
     if (tournamentData) {
-      if (tournamentData.status === 'draft') {
-        router.replace(`/draft-tournament/${id}`);
-        return;
-      }
       setTournament(tournamentData);
     }
 
@@ -232,7 +233,9 @@ export default function TournamentDetailScreen() {
       setScores(formattedScores);
     }
 
-    if (tournamentData && tournamentData.status !== 'draft') {
+    if (!tournamentData || tournamentData.status === 'draft') {
+      setChatMessages([]);
+    } else {
       const { data: chatData, error: chatErr } = await supabase
         .from('tournament_chat')
         .select(
@@ -274,8 +277,6 @@ export default function TournamentDetailScreen() {
           }),
         );
       }
-    } else {
-      setChatMessages([]);
     }
 
     setLoading(false);
@@ -342,9 +343,9 @@ export default function TournamentDetailScreen() {
       if (error) {
         if (error.message?.includes('ALREADY_FORFEITED') || error.message?.toLowerCase().includes('already forfeited')) {
           Alert.alert('Already forfeited', 'You have already forfeited this tournament.');
-        } else {
-          Alert.alert('Error', 'Could not forfeit the tournament. Please try again.');
+          return;
         }
+        Alert.alert('Error', 'Could not forfeit the tournament. Please try again.');
         return;
       }
 
@@ -598,6 +599,7 @@ export default function TournamentDetailScreen() {
                         return (
                           <DailySubmissionCard
                             key={p.user_id + date}
+                            dateLabel={formatDateShort(date)}
                             playerName={p.display_name}
                             didSubmit={didSubmit}
                             score={score}

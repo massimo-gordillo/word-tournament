@@ -28,3 +28,15 @@ This app is intentionally pull-based with no realtime subscriptions.
 - Any debug logging or dev-only UI should be gated behind __DEV__ checks. Create a utils/logger.ts with a devLog utility and use that instead of raw console.log throughout the app.
 - The app targets iOS and Android as its primary platforms. Web (via Expo Web) is supported for development and testing purposes only. Prioritize React Native layout and UX patterns. Do not add web-specific features or optimize for web-only behavior.
 - When needing to make db migrations, do not modify existing migration files, instead create a new migration file. 
+
+## Code Style: Early Returns and Flat Functions
+
+Async data loading functions must use early returns for all error and edge 
+cases. The happy path should flow linearly down the function without nested 
+conditionals.
+- Handle all failure and edge cases at the top of the function with an 
+  immediate return
+- Never re-check a condition that has already been handled by an earlier return
+- Avoid nested if/else blocks in async functions — flatten them with returns
+- By the time the happy path code runs, all preconditions should be guaranteed 
+  without further checks

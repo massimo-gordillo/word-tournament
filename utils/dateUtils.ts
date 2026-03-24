@@ -30,3 +30,19 @@ export function formatDateShort(input: DateInput): string {
   return `${month} ${day}`;
 }
 
+/** If `dateStr` is calendar-today (local), returns "Today"; otherwise `formatDateShort`. Pass-through for literal "Today". */
+export function formatDateOrToday(dateStr: string): string {
+  if (dateStr === 'Today') return 'Today';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const d = toDate(dateStr);
+    const t = new Date();
+    if (
+      d.getFullYear() === t.getFullYear() &&
+      d.getMonth() === t.getMonth() &&
+      d.getDate() === t.getDate()
+    ) {
+      return 'Today';
+    }
+  }
+  return formatDateShort(dateStr);
+}

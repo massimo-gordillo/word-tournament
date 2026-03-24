@@ -26,10 +26,12 @@ export default function AccountScreen() {
       .eq('id', user.id)
       .single();
 
-    if (!error && data) {
-      setDisplayName(data.display_name);
+    if (error || !data) {
+      setLoading(false);
+      return;
     }
 
+    setDisplayName(data.display_name);
     setLoading(false);
   };
 
@@ -52,10 +54,11 @@ export default function AccountScreen() {
 
     if (updateError) {
       setError(updateError.message);
-    } else {
-      setSuccess('Profile updated successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      return;
     }
+
+    setSuccess('Profile updated successfully');
+    setTimeout(() => setSuccess(''), 3000);
   };
 
   const handleSignOut = async () => {
