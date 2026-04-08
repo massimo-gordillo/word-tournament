@@ -69,7 +69,7 @@ To submit a privacy request, use the contact method in Section 10.
 
 ## 10. Contact Us
 
-For privacy questions or requests, contact us through heavyatomstudios@gmail.com
+For privacy questions or requests, contact us through heavyatomstudios AT gmail DOT com
 
 ## 11. Changes to This Policy
 

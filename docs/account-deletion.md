@@ -12,7 +12,7 @@ The Wordle Tracker app retains:
 
 To request your account deletion please email 
 
-- heavyatomstudios@gmail.com
+- heavyatomstudios AT gmail DOT com
 
 with the subject "Wordle App Account Deletion Request"
 and the body containing the email address you used to sign up for the account.
