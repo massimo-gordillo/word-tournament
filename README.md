@@ -189,7 +189,21 @@ EXPO_PUBLIC_SUPABASE_URL=<your-url>
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-key>
 ```
 
-4. Run database migrations
+4. Google Play review login
+
+The app signs in with **email and password** (not “Sign in with Google”).
+
+- Local + linked remote provisioning can be done via seeded SQL:
+  - set `SUPABASE_PLAY_REVIEW_PASSWORD` in `.env` (optional but recommended)
+  - run `npm run supabase:db:push` for linked remote (this now includes seed data)
+  - run `npm run supabase:db:reset` for local reset
+- The seed script is idempotent and will create or update the Play review account/profile each time.
+
+For manual hosted setup (Dashboard-driven), if you create the auth user directly in Supabase Auth, ensure profile row exists:
+
+`INSERT INTO public.users (id, display_name) SELECT id, 'Google Play Review' FROM auth.users WHERE email = '<reviewer-email>' ON CONFLICT (id) DO NOTHING;`
+
+5. Run database migrations
 The migrations are already applied. Tables include:
 - users
 - tournaments
@@ -271,6 +285,7 @@ For issues or questions, please refer to:
 - Expo documentation: https://docs.expo.dev
 - Supabase documentation: https://supabase.com/docs
 - React Native documentation: https://reactnative.dev
+- Privacy policy for app store listing: `docs/privacy-policy.md`
 
 ## License
 

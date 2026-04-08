@@ -31,5 +31,8 @@ yarn-error.*
 .env*.local
 .env
 
+# Generated from SUPABASE_PLAY_REVIEW_PASSWORD (see npm run supabase:seed)
+supabase/seed_play_review.generated.sql
+
 # typescript
 *.tsbuildinfo
