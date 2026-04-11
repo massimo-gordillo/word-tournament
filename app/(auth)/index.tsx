@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { AppleSignInButton } from '@/components/AppleSignInButton';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -38,6 +39,8 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Wordle Tournaments</Text>
         <Text style={styles.subtitle}>Track your daily Wordle scores</Text>
+
+        <AppleSignInButton />
 
         <View style={styles.form}>
           <TextInput
