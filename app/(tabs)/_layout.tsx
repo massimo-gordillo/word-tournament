@@ -69,6 +69,18 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="tournament/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="draft-tournament/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
