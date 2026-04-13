@@ -116,7 +116,7 @@ export default function OngoingTournamentsScreen() {
     setJoiningTournament(true);
     setJoinError('');
 
-    const { data, error } = await supabase.rpc('join_tournament_by_code', {
+    const { error } = await supabase.rpc('join_tournament_by_code', {
       p_join_code: joinCode.toUpperCase(),
     });
 

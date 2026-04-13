@@ -19,7 +19,7 @@ export function AppleSignInButton() {
         throw new Error('No identity token returned from Apple')
       }
 
-      const { data, error } = await supabase.auth.signInWithIdToken({
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
       })

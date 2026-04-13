@@ -1,7 +1,9 @@
 -- Seed data used by local reset and optional linked-remote push include-seed.
 --
--- Google Play / demo reviewer login is generated from .env (see npm run supabase:seed and
--- supabase/seed_play_review.generated.sql). Postgres cannot read .env directly.
+-- Google Play / demo reviewer login is created via Admin API (npm run supabase:play-review-seed).
+-- Optional local manual-test accounts: LOCAL_TESTING_EMAIL / LOCAL_TESTING_PASSWORD in .env,
+-- then npm run supabase:local-test-users-seed (runs automatically after supabase:db:reset).
+-- Postgres cannot read .env for auth users; seed.sql does not create auth.users rows.
 --
 -- Set in repo-root .env (optional; defaults are used if unset):
 --   SUPABASE_PLAY_REVIEW_PASSWORD=...

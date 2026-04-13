@@ -38,7 +38,7 @@ export default function DailySubmissionScreen() {
 
   const updateCountdown = () => {
     const cutoffHour = config?.cutoffHourEst ?? 23;
-    const { hours, minutes, seconds, isPastCutoff: pastCutoff } = getTimeUntilCutoff(cutoffHour);
+    const { hours, minutes, isPastCutoff: pastCutoff } = getTimeUntilCutoff(cutoffHour);
 
     if (pastCutoff) {
       setIsPastCutoff(true);
