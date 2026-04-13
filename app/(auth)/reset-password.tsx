@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,41 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 
-export default function SignupScreen() {
-  const [email, setEmail] = useState('');
+export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sessionReady, setSessionReady] = useState(false);
 
-  const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
+  useEffect(() => {
+    let cancelled = false;
+
+    const sync = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setSessionReady(!!data.session);
+    };
+
+    void sync();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      setSessionReady(!!session);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -39,45 +62,35 @@ export default function SignupScreen() {
     setLoading(true);
     setError('');
 
-    const displayName = email.split('@')[0] || 'Player';
-    const emailRedirectTo = Linking.createURL('(tabs)');
+    const { error: updateError } = await supabase.auth.updateUser({ password });
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo,
-        data: { display_name: displayName },
-      },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
+    if (updateError) {
+      setError(updateError.message);
       setLoading(false);
-      return;
-    }
-
-    if (!data.user) {
-      setLoading(false);
-      router.replace({
-        pathname: '/(auth)/check-email',
-        params: { email, variant: 'signup' },
-      });
       return;
     }
 
     setLoading(false);
-
-    if (data.session) {
-      router.replace('/(tabs)');
-      return;
-    }
-
-    router.replace({
-      pathname: '/(auth)/check-email',
-      params: { email, variant: 'signup' },
-    });
+    router.replace('/(tabs)');
   };
+
+  if (!sessionReady) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.title}>Reset password</Text>
+        <Text style={styles.subtitle}>
+          Open the reset link from your email on this device. If you already did, try requesting a new
+          link from Forgot password.
+        </Text>
+        <TouchableOpacity onPress={() => router.replace('/(auth)/forgot-password')}>
+          <Text style={styles.linkTextBold}>Forgot password</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.secondary} onPress={() => router.replace('/(auth)')}>
+          <Text style={styles.linkText}>Back to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -85,42 +98,30 @@ export default function SignupScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Wordle Tournaments</Text>
+        <Text style={styles.title}>Choose a new password</Text>
+        <Text style={styles.subtitle}>Enter and confirm your new password.</Text>
 
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            autoCorrect={false}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            editable={!loading}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password (min 6 characters)"
+            placeholder="New password"
             placeholderTextColor="#999"
             value={password}
+            onChangeText={setPassword}
             autoCapitalize="none"
             autoCorrect={false}
-            onChangeText={setPassword}
             secureTextEntry
             editable={!loading}
           />
 
           <TextInput
             style={styles.input}
-            placeholder="Confirm password"
+            placeholder="Confirm new password"
             placeholderTextColor="#999"
             value={confirmPassword}
+            onChangeText={setConfirmPassword}
             autoCapitalize="none"
             autoCorrect={false}
-            onChangeText={setConfirmPassword}
             secureTextEntry
             editable={!loading}
           />
@@ -129,20 +130,14 @@ export default function SignupScreen() {
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSignup}
+            onPress={handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
+              <Text style={styles.buttonText}>Update password</Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-            <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
-            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -155,13 +150,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  centered: {
+    justifyContent: 'center',
+    padding: 24,
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a1a',
     textAlign: 'center',
@@ -171,7 +170,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
+    lineHeight: 22,
   },
   form: {
     gap: 16,
@@ -203,11 +203,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 16,
   },
   linkTextBold: {
     color: '#10b981',
     fontWeight: '600',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  secondary: {
+    marginTop: 24,
   },
   error: {
     color: '#ef4444',

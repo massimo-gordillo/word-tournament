@@ -41,6 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { display_name: displayName },
+        },
       });
 
       if (error) return { error };
@@ -48,15 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.user) {
         return { error: null };
       }
-
-      const { error: profileError } = await supabase.from('users').insert([
-        {
-          id: data.user.id,
-          display_name: displayName,
-        },
-      ]);
-
-      if (profileError) return { error: profileError };
 
       return { error: null };
     } catch (error) {

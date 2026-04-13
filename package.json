@@ -11,7 +11,8 @@
     "supabase:play-review-seed": "node scripts/generate-play-review-seed.mjs",
     "supabase:status": "supabase status",
     "supabase:db:push": "supabase db push && npm run supabase:play-review-seed",
-    "supabase:db:reset": "supabase db reset && npm run supabase:play-review-seed",
+    "supabase:db:reset": "supabase db reset && npm run supabase:play-review-seed && npm run supabase:local-test-users-seed",
+    "supabase:local-test-users-seed": "node scripts/seed-local-test-users.mjs",
     "supabase:functions:deploy": "supabase functions deploy update-leaderboard"
   },
   "dependencies": {
@@ -25,6 +26,7 @@
     "expo-blur": "~15.0.7",
     "expo-camera": "~17.0.8",
     "expo-constants": "~18.0.9",
+    "expo-dev-client": "~6.0.20",
     "expo-font": "~14.0.8",
     "expo-haptics": "~15.0.7",
     "expo-linear-gradient": "~15.0.7",
@@ -54,6 +56,8 @@
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
     "cross-env": "^10.1.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "supabase": "^2.76.15",
     "typescript": "~5.9.2"
   }

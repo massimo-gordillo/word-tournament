@@ -1,34 +1,48 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { AppleSignInButton } from '@/components/AppleSignInButton';
+import * as Linking from 'expo-linking';
+import { supabase } from '@/lib/supabase';
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields');
+  const handleSubmit = async () => {
+    if (!email) {
+      setError('Please enter your email');
       return;
     }
 
     setLoading(true);
     setError('');
 
-    const { error } = await signIn(email, password);
+    const redirectTo = Linking.createURL('/reset-password');
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
 
-    if (error) {
-      setError(error.message);
+    if (resetError) {
+      setError(resetError.message);
       setLoading(false);
       return;
     }
 
-    router.replace('/(tabs)');
+    setLoading(false);
+    router.replace({
+      pathname: '/(auth)/check-email',
+      params: { email, variant: 'recovery' },
+    });
   };
 
   return (
@@ -37,10 +51,8 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Wordle Tournaments</Text>
-        <Text style={styles.subtitle}>Track your daily Wordle scores</Text>
-
-        <AppleSignInButton />
+        <Text style={styles.title}>Forgot password</Text>
+        <Text style={styles.subtitle}>{"We'll email you a link to reset it."}</Text>
 
         <View style={styles.form}>
           <TextInput
@@ -55,47 +67,23 @@ export default function LoginScreen() {
             editable={!loading}
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            secureTextEntry={true}
-            editable={!loading}
-          />
-
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            onPress={handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={styles.buttonText}>Send reset link</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => router.push('/(auth)/forgot-password')}
-            disabled={loading}
-          >
+          <TouchableOpacity onPress={() => router.back()} disabled={loading}>
             <Text style={styles.linkText}>
-              <Text style={styles.linkTextBold}>Forgot password?</Text>
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push('/(auth)/signup')}
-            disabled={loading}
-          >
-            <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
+              <Text style={styles.linkTextBold}>Back to Sign In</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -138,7 +126,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  
   button: {
     backgroundColor: '#10b981',
     borderRadius: 12,
