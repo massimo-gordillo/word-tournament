@@ -33,6 +33,7 @@ export default function OngoingTournamentsScreen() {
   const [limitQuantity, setLimitQuantity] = useState(4);
   const [showOngoing, setShowOngoing] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [wonTournamentIds, setWonTournamentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadTournaments();
@@ -59,6 +60,7 @@ export default function OngoingTournamentsScreen() {
     setForfeitedTournamentIds(forfeitedIds);
 
     if (tournamentIds.length === 0) {
+      setWonTournamentIds(new Set());
       setLoading(false);
       return;
     }
@@ -75,6 +77,13 @@ export default function OngoingTournamentsScreen() {
       return;
     }
 
+    const { data: winnersData } = await supabase
+      .from('tournament_winners')
+      .select('tournament_id')
+      .eq('user_id', user.id)
+      .in('tournament_id', tournamentIds);
+
+    setWonTournamentIds(new Set((winnersData ?? []).map(w => w.tournament_id)));
     setTournaments(data);
     setLoading(false);
   };
@@ -254,6 +263,7 @@ export default function OngoingTournamentsScreen() {
                             ? 'Your Tournament'
                             : tournament.name
                         }
+                        showWinnerTrophy={wonTournamentIds.has(tournament.id)}
                         statusLabel={getStatusText(tournament)}
                         statusColor={getStatusColor(
                           tournament.status,
@@ -303,6 +313,7 @@ export default function OngoingTournamentsScreen() {
                             ? 'Your Tournament'
                             : tournament.name
                         }
+                        showWinnerTrophy={wonTournamentIds.has(tournament.id)}
                         statusLabel={getStatusText(tournament)}
                         statusColor={getStatusColor(
                           tournament.status,

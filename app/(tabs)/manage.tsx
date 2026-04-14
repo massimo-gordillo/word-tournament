@@ -55,6 +55,7 @@ export default function ManageTournamentsScreen() {
   const [refreshingPast, setRefreshingPast] = useState(false);
   const [limitModalVisible, setLimitModalVisible] = useState(false);
   const [limitQuantity, setLimitQuantity] = useState(4);
+  const [wonTournamentIds, setWonTournamentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadUserDisplayName();
@@ -118,6 +119,7 @@ export default function ManageTournamentsScreen() {
 
     if (tournamentIds.length === 0) {
       setPastTournaments([]);
+      setWonTournamentIds(new Set());
       setLoading(false);
       return;
     }
@@ -134,6 +136,14 @@ export default function ManageTournamentsScreen() {
       setLoading(false);
       return;
     }
+
+    const { data: winnersData } = await supabase
+      .from('tournament_winners')
+      .select('tournament_id')
+      .eq('user_id', user.id)
+      .in('tournament_id', tournamentIds);
+
+    setWonTournamentIds(new Set((winnersData ?? []).map(w => w.tournament_id)));
 
     const items: PastTournamentItem[] = (tournamentsData ?? [])
       .filter(t => t.status === 'closed' || forfeitedByTournamentId.get(t.id))
@@ -358,6 +368,7 @@ export default function ManageTournamentsScreen() {
             <TournamentListItem
               key={tournament.id}
               title={tournament.created_by === user?.id ? "Your Tournament" : tournament.name}
+              showWinnerTrophy={wonTournamentIds.has(tournament.id)}
               statusLabel={showForfeitedLabel ? 'Forfeited' : 'Closed'}
               statusColor={showForfeitedLabel ? '#ef4444' : '#6b7280'}
               durationLabel={calendarDays.toString()}

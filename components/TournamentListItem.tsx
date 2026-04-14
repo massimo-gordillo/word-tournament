@@ -3,6 +3,7 @@ import { TouchableOpacity, View, Text, StyleSheet, GestureResponderEvent } from 
 
 type Props = {
   title: string;
+  showWinnerTrophy?: boolean;
   statusLabel: string;
   statusColor: string;
   durationLabel: string;
@@ -13,6 +14,7 @@ type Props = {
 
 export function TournamentListItem({
   title,
+  showWinnerTrophy = false,
   statusLabel,
   statusColor,
   durationLabel,
@@ -24,7 +26,7 @@ export function TournamentListItem({
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={1}>
-          {title}
+          {title}{showWinnerTrophy ? ' 🏆' : ''}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
           <Text style={styles.statusText}>{statusLabel}</Text>
