@@ -195,7 +195,10 @@ export default function DraftTournamentScreen() {
       return;
     }
 
-    router.replace(`/tournament/${tournament.id}`);
+    router.replace({
+      pathname: '/tournament/[id]',
+      params: { id: tournament.id, source: 'manage' },
+    });
   };
 
   const handleDiscardTournament = () => {

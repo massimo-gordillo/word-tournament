@@ -1,10 +1,11 @@
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs, Redirect, useRouter } from 'expo-router';
 import { Home, Trophy, BarChart3, User, Settings } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
 
 export default function TabLayout() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -53,6 +54,15 @@ export default function TabLayout() {
         options={{
           title: 'Manage',
           tabBarIcon: ({ size, color }) => <Settings size={size} color={color} />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.replace({
+              pathname: '/(tabs)/manage',
+              params: { reset: Date.now().toString() },
+            });
+          },
         }}
       />
       <Tabs.Screen

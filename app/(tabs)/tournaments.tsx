@@ -262,7 +262,12 @@ export default function OngoingTournamentsScreen() {
                         durationLabel={durationLabel}
                         endDateLabel={endDateLabel}
                         secondaryText={`Code: ${tournament.join_code}`}
-                        onPress={() => router.push(`/tournament/${tournament.id}`)}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/tournament/[id]',
+                            params: { id: tournament.id, source: 'tournaments' },
+                          })
+                        }
                       />
                     );
                   })}
@@ -306,7 +311,12 @@ export default function OngoingTournamentsScreen() {
                         durationLabel={durationLabel}
                         endDateLabel={endDateLabel}
                         secondaryText={`Code: ${tournament.join_code}`}
-                        onPress={() => router.push(`/tournament/${tournament.id}`)}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/tournament/[id]',
+                            params: { id: tournament.id, source: 'tournaments' },
+                          })
+                        }
                       />
                     );
                   })}

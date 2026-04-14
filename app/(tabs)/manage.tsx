@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, RefreshControl } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Plus, FileText, History, ChevronDown } from 'lucide-react-native';
@@ -39,6 +39,7 @@ const DURATION_OPTIONS: DurationOption[] = [
 export default function ManageTournamentsScreen() {
   const { user } = useAuth();
   const { config } = useAppConfig();
+  const { reset } = useLocalSearchParams<{ reset?: string }>();
   const [activeView, setActiveView] = useState<'menu' | 'drafts' | 'past'>('menu');
   const [draftTournaments, setDraftTournaments] = useState<Tournament[]>([]);
   const [pastTournaments, setPastTournaments] = useState<PastTournamentItem[]>([]);
@@ -58,6 +59,12 @@ export default function ManageTournamentsScreen() {
   useEffect(() => {
     loadUserDisplayName();
   }, [user]);
+
+  useEffect(() => {
+    setActiveView('menu');
+    setCreateModalVisible(false);
+    setShowDurationPicker(false);
+  }, [reset]);
 
   const loadUserDisplayName = async () => {
     if (!user) return;
@@ -355,7 +362,12 @@ export default function ManageTournamentsScreen() {
               statusColor={showForfeitedLabel ? '#ef4444' : '#6b7280'}
               durationLabel={calendarDays.toString()}
               endDateLabel={formatDateShort(tournament.end_date)}
-              onPress={() => router.push(`/tournament/${tournament.id}`)}
+              onPress={() =>
+                router.push({
+                  pathname: '/tournament/[id]',
+                  params: { id: tournament.id, source: 'manage' },
+                })
+              }
             />
           );
         })

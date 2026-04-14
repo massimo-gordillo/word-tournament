@@ -63,7 +63,7 @@ const FANFARE_PIECES = 16;
 export default function TournamentDetailScreen() {
   const { user } = useAuth();
   const { config } = useAppConfig();
-  const { id } = useLocalSearchParams();
+  const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [scores, setScores] = useState<Score[]>([]);
   const [todaySubmissions, setTodaySubmissions] = useState<Submission[]>([]);
@@ -413,13 +413,12 @@ export default function TournamentDetailScreen() {
       return;
     }
 
-    if (tournament.status === 'active') {
-      router.replace('/(tabs)/tournaments');
-    } else if (tournament.status === 'closed') {
+    if (source === 'manage') {
       router.replace('/(tabs)/manage');
-    } else {
-      router.replace('/(tabs)/tournaments');
+      return;
     }
+
+    router.replace('/(tabs)/tournaments');
   };
 
   const getPlayerStatus = (userId: string) => {
