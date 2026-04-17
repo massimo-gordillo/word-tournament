@@ -97,10 +97,10 @@ file_size_limit = "50MiB"
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-# Matches Expo app.json "scheme" (wordle-battle) for native deep links from auth emails.
-site_url = "wordle-battle://"
+# Matches Expo app.json "scheme" (word-battle) for native deep links from auth emails.
+site_url = "word-battle://"
 # Wildcard allow-list for Expo Router deep links (signup confirm, password recovery, etc.).
-additional_redirect_urls = ["wordle-battle://**"]
+additional_redirect_urls = ["word-battle://**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -259,7 +259,7 @@ inspector_port = 8083
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 # entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
 
-[functions.run-daily-cron]
+[functions.edge-run-daily-cron]
 enabled = true
 verify_jwt = false
 
