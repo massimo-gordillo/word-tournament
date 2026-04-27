@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start",
     "build:web": "expo export --platform web",
-    "lint": "expo lint",
+    "lint": "expo lint && npm run check:draft-route-effect",
+    "check:draft-route-effect": "node scripts/assert-draft-tournament-route-effect.mjs",
     "typecheck": "tsc --noEmit",
     "supabase:play-review-seed": "node scripts/generate-play-review-seed.mjs",
     "supabase:status": "npx supabase status",

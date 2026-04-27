@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Users, Copy, Play, Trash2 } from 'lucide-react-native';
 import { useAppConfig } from '@/contexts/ConfigContext';
+import { calendarDaysInclusiveCount } from '@/lib/dateUtils';
 
 /** Cross-platform confirm: Alert.alert on native, window.confirm on web (Alert.alert doesn't work on web). */
 function confirmDiscard(
@@ -24,8 +25,22 @@ function confirmDiscard(
   }
   Alert.alert(title, message, [
     { text: 'Keep draft', style: 'cancel', onPress: onCancel },
-    { text: 'Discard', style: 'destructive', onPress: () => void Promise.resolve(onConfirm()) },
+    {
+      text: 'Discard',
+      style: 'destructive',
+      onPress: () => void Promise.resolve(onConfirm()),
+    },
   ]);
+}
+
+/** Calendar days from `start_date` / `end_date` (same inclusive rule as tournament creation). */
+function formatTournamentLengthLabel(startDateStr: string, endDateStr: string): string {
+  const days = calendarDaysInclusiveCount(startDateStr, endDateStr);
+  if (days === 3) return '3 days';
+  if (days === 7) return '7 days';
+  if (days === 14) return '2 weeks';
+  if (days === 28) return '4 weeks';
+  return `${days} days`;
 }
 
 interface Tournament {
@@ -57,37 +72,11 @@ export default function DraftTournamentScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
-  useEffect(() => {
-    loadTournamentData();
-  }, []);
-
-  const loadTournamentData = async () => {
-    if (!id) return;
-
-    const { data: tournamentData } = await supabase
-      .from('tournaments')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (!tournamentData) {
-      await loadParticipants();
-      setLoading(false);
-      return;
-    }
-
-    setTournament(tournamentData);
-    await loadParticipants();
-    setLoading(false);
-  };
-
-  const loadParticipants = async () => {
-    if (!id) return;
-
+  const loadParticipants = useCallback(async (tournamentId: string) => {
     const { data: participantData } = await supabase
       .from('tournament_participants')
       .select('id, user_id')
-      .eq('tournament_id', id);
+      .eq('tournament_id', tournamentId);
 
     if (!participantData) {
       return;
@@ -113,7 +102,65 @@ export default function DraftTournamentScreen() {
     }));
 
     setParticipants(formattedParticipants);
+  }, []);
+
+  const loadTournamentData = async () => {
+    if (!id) return;
+
+    const { data: tournamentData } = await supabase
+      .from('tournaments')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (!tournamentData) {
+      await loadParticipants(id);
+      setLoading(false);
+      return;
+    }
+
+    setTournament(tournamentData);
+    await loadParticipants(id);
+    setLoading(false);
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadForRouteParam() {
+      if (!id) return;
+
+      setLoading(true);
+      setTournament(null);
+      setParticipants([]);
+
+      const { data: tournamentData } = await supabase
+        .from('tournaments')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (!tournamentData) {
+        await loadParticipants(id);
+        if (cancelled) return;
+        setLoading(false);
+        return;
+      }
+
+      setTournament(tournamentData);
+      await loadParticipants(id);
+      if (cancelled) return;
+      setLoading(false);
+    }
+
+    void loadForRouteParam();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, loadParticipants]);
 
   const handleKickParticipant = (participant: Participant) => {
     if (!tournament || participant.user_id === user?.id) return;
@@ -124,7 +171,7 @@ export default function DraftTournamentScreen() {
         p_user_id: participant.user_id,
       });
 
-      await loadParticipants();
+      await loadParticipants(tournament.id);
     };
 
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
@@ -137,14 +184,14 @@ export default function DraftTournamentScreen() {
       return;
     }
 
-    Alert.alert(
-      'Remove player',
-      'Remove this player from the tournament? They will not be able to re-join.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => void confirmAndKick() },
-      ],
-    );
+    Alert.alert('Remove player', 'Remove this player from the tournament? They will not be able to re-join.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => void confirmAndKick(),
+      },
+    ]);
   };
 
   const handleCopyCode = () => {
@@ -172,10 +219,7 @@ export default function DraftTournamentScreen() {
     if (error) {
       const message = error.message || '';
       if (message.includes('NOT_ENOUGH_PLAYERS')) {
-        Alert.alert(
-          'Not enough players',
-          'At least 2 players must still be in the tournament to start it.',
-        );
+        Alert.alert('Not enough players', 'At least 2 players must still be in the tournament to start it.');
         await loadTournamentData();
         return;
       }
@@ -250,14 +294,14 @@ export default function DraftTournamentScreen() {
       return;
     }
 
-    Alert.alert(
-      'Leave tournament',
-      'Are you sure you want to leave this draft tournament?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Leave', style: 'destructive', onPress: () => void confirmAndLeave() },
-      ],
-    );
+    Alert.alert('Leave tournament', 'Are you sure you want to leave this draft tournament?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Leave',
+        style: 'destructive',
+        onPress: () => void confirmAndLeave(),
+      },
+    ]);
   };
 
   if (loading) {
@@ -332,17 +376,7 @@ export default function DraftTournamentScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoLabel}>Tournament length</Text>
             <Text style={styles.infoValue}>
-              {(() => {
-                const start = new Date(tournament.start_date);
-                const end = new Date(tournament.end_date);
-                const days =
-                  Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                if (days === 3) return '3 days';
-                if (days === 7) return '7 days';
-                if (days === 14) return '2 weeks';
-                if (days === 28) return '4 weeks';
-                return `${days} days`;
-              })()}
+              {formatTournamentLengthLabel(tournament.start_date, tournament.end_date)}
             </Text>
           </View>
           <View style={styles.participantsSection}>
@@ -411,16 +445,7 @@ export default function DraftTournamentScreen() {
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>Tournament length</Text>
           <Text style={styles.infoValue}>
-            {(() => {
-              const start = new Date(tournament.start_date);
-              const end = new Date(tournament.end_date);
-              const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-              if (days === 3) return '3 days';
-              if (days === 7) return '7 days';
-              if (days === 14) return '2 weeks';
-              if (days === 28) return '4 weeks';
-              return `${days} days`;
-            })()}
+            {formatTournamentLengthLabel(tournament.start_date, tournament.end_date)}
           </Text>
         </View>
 

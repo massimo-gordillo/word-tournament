@@ -69,6 +69,20 @@ export function getTimeUntilCutoff(cutoffHourEst: number = 23): {
 
 export type DateInput = Date | string;
 
+/**
+ * Inclusive calendar-day span between DB date strings (`YYYY-MM-DD`).
+ * Parses with UTC date components so counts match stored calendar dates everywhere (avoids the
+ * common bug where `new Date("YYYY-MM-DD")` is interpreted as UTC midnight and shifts local dates).
+ */
+export function calendarDaysInclusiveCount(startDateStr: string, endDateStr: string): number {
+  const startMatch = String(startDateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const endMatch = String(endDateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!startMatch || !endMatch) return 1;
+  const t0 = Date.UTC(Number(startMatch[1]), Number(startMatch[2]) - 1, Number(startMatch[3]));
+  const t1 = Date.UTC(Number(endMatch[1]), Number(endMatch[2]) - 1, Number(endMatch[3]));
+  return Math.round((t1 - t0) / 86400000) + 1;
+}
+
 const pad2 = (n: number) => n.toString().padStart(2, '0');
 const monthShortNames = [
   'Jan',

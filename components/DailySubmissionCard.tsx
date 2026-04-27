@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 6,
     padding: 12,
     marginBottom: 12,
   },
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   dateLabel: {
     fontSize: 12,
     color: '#6b7280',
-    marginBottom: 6,
+    marginBottom: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -122,11 +122,15 @@ const styles = StyleSheet.create({
   },
   wordGrid: {
     marginTop: 0,
+    marginBottom: 6,
     alignItems: 'center',
+    margin: 16,
   },
   wordRow: {
     fontSize: 20,
-    marginBottom: 1,
-    letterSpacing: 1,
+    marginBottom: 0,
+    lineHeight: 22,
+    letterSpacing: -5,
+    textAlign: 'left',
   },
 });
