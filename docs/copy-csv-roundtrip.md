@@ -34,10 +34,23 @@ node scripts/export-copy-csv.mjs path/to/output.csv
 
 - Keep the `key` column unchanged.
 - Keep the `default` column as reference.
-- Add a new column name (example: `client_v1`) and place edits there.
+- Place client edits in the `ben prefered` column.
+- Optional `dev override` column for developer copy; when filled, it wins over `ben prefered`.
 - Blank cells are allowed and keep existing app copy on import.
 
-## Import Selected Column
+## Import Copy (default merge)
+
+```bash
+npm run copy:import:csv -- --file scripts/copy-export.csv
+```
+
+Merge order per row:
+
+1. `dev override` when it contains non-whitespace text
+2. otherwise `ben prefered` when it contains non-whitespace text
+3. otherwise keep existing app copy
+
+## Import A Single Column (legacy)
 
 ```bash
 npm run copy:import:csv -- --file scripts/copy-export.csv --column client_v1
@@ -46,8 +59,10 @@ npm run copy:import:csv -- --file scripts/copy-export.csv --column client_v1
 Import validations:
 
 - fails if `key` column is missing,
-- fails if selected column does not exist,
+- default merge mode fails if `dev override` or `ben prefered` is missing,
+- `--column` mode fails if the selected column does not exist,
 - fails on duplicate keys,
-- fails if CSV has unknown keys or is missing required keys.
+- fails if CSV has unknown keys,
+- warns (and continues) if CSV is missing keys that exist in source; those entries stay unchanged.
 
 After import, app copy updates in `app/copy/strings.ts`.

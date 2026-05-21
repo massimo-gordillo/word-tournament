@@ -2,9 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  COPY_CSV_CLIENT_COLUMN,
+  COPY_CSV_DEV_OVERRIDE_COLUMN,
   parseCsvRows,
   readCopyEntries,
   resolveCopyPath,
+  resolveCopyValueFromRow,
   writeCopyEntries,
 } from './copy-csv-lib.mjs';
 
@@ -45,8 +48,10 @@ async function main() {
   const currentFilePath = fileURLToPath(import.meta.url);
   const projectRoot = path.resolve(path.dirname(currentFilePath), '..');
   const { file, column } = parseArgs(process.argv.slice(2));
-  if (!file || !column) {
-    throw new Error('Usage: node scripts/import-copy-csv.mjs --file <relative/path.csv> --column <columnName>');
+  if (!file) {
+    throw new Error(
+      'Usage: node scripts/import-copy-csv.mjs --file <relative/path.csv> [--column <columnName>]',
+    );
   }
 
   const inputPath = path.resolve(projectRoot, file);
@@ -55,23 +60,47 @@ async function main() {
   const [header, ...dataRows] = rows;
 
   const keyIndex = header.indexOf('key');
-  const targetColumnIndex = header.indexOf(column);
 
   if (keyIndex === -1) {
     throw new Error("CSV is missing required 'key' column.");
   }
-  if (targetColumnIndex === -1) {
-    throw new Error(`CSV does not contain requested column '${column}'.`);
-  }
 
   const importedByKey = new Map();
-  for (const row of dataRows) {
-    const key = row[keyIndex]?.trim();
-    if (!key) continue;
-    if (importedByKey.has(key)) {
-      throw new Error(`CSV contains duplicate key '${key}'.`);
+  let importModeLabel;
+
+  if (column) {
+    const targetColumnIndex = header.indexOf(column);
+    if (targetColumnIndex === -1) {
+      throw new Error(`CSV does not contain requested column '${column}'.`);
     }
-    importedByKey.set(key, row[targetColumnIndex] ?? '');
+    importModeLabel = `column '${column}'`;
+    for (const row of dataRows) {
+      const key = row[keyIndex]?.trim();
+      if (!key) continue;
+      if (importedByKey.has(key)) {
+        throw new Error(`CSV contains duplicate key '${key}'.`);
+      }
+      importedByKey.set(key, row[targetColumnIndex] ?? '');
+    }
+  } else {
+    const devOverrideIndex = header.indexOf(COPY_CSV_DEV_OVERRIDE_COLUMN);
+    const benPreferredIndex = header.indexOf(COPY_CSV_CLIENT_COLUMN);
+    if (devOverrideIndex === -1) {
+      throw new Error(`CSV is missing required '${COPY_CSV_DEV_OVERRIDE_COLUMN}' column.`);
+    }
+    if (benPreferredIndex === -1) {
+      throw new Error(`CSV is missing required '${COPY_CSV_CLIENT_COLUMN}' column.`);
+    }
+    importModeLabel = `'${COPY_CSV_DEV_OVERRIDE_COLUMN}' then '${COPY_CSV_CLIENT_COLUMN}'`;
+    for (const row of dataRows) {
+      const key = row[keyIndex]?.trim();
+      if (!key) continue;
+      if (importedByKey.has(key)) {
+        throw new Error(`CSV contains duplicate key '${key}'.`);
+      }
+      const resolved = resolveCopyValueFromRow(row, [devOverrideIndex, benPreferredIndex]);
+      importedByKey.set(key, resolved ?? '');
+    }
   }
 
   const copyPath = resolveCopyPath(projectRoot);
@@ -86,7 +115,10 @@ async function main() {
 
   const missingKeys = [...existingKeys].filter(key => !importedKeys.has(key));
   if (missingKeys.length > 0) {
-    throw new Error(`CSV is missing keys required by source: ${missingKeys.join(', ')}`);
+    console.warn(
+      `Warning: CSV is missing ${missingKeys.length} key(s) present in source; those entries were left unchanged.`,
+    );
+    console.warn(missingKeys.join(', '));
   }
 
   let updatedCount = 0;
@@ -102,7 +134,7 @@ async function main() {
   });
 
   await writeCopyEntries(copyPath, template, nextEntries);
-  console.log(`Imported column '${column}' from ${inputPath}`);
+  console.log(`Imported ${importModeLabel} from ${inputPath}`);
   console.log(`Updated ${updatedCount} copy values (blank cells kept existing text).`);
 }
 

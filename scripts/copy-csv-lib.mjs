@@ -113,10 +113,29 @@ export async function writeCopyEntries(copyFilePath, template, nextEntries) {
   await fs.writeFile(copyFilePath, nextSource, 'utf8');
 }
 
+export const COPY_CSV_CLIENT_COLUMN = 'ben prefered';
+export const COPY_CSV_DEV_OVERRIDE_COLUMN = 'dev override';
+
+export function hasNonWhitespaceCopyContent(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/** First column with non-whitespace content wins; otherwise null (keep existing copy). */
+export function resolveCopyValueFromRow(row, columnIndices) {
+  for (const columnIndex of columnIndices) {
+    if (columnIndex === -1) continue;
+    const value = row[columnIndex] ?? '';
+    if (hasNonWhitespaceCopyContent(value)) {
+      return value;
+    }
+  }
+  return null;
+}
+
 export function buildCsvRows(entries) {
-  const rows = [['key', 'default']];
+  const rows = [['key', 'default', COPY_CSV_CLIENT_COLUMN, COPY_CSV_DEV_OVERRIDE_COLUMN]];
   for (const entry of entries) {
-    rows.push([entry.key, entry.value]);
+    rows.push([entry.key, entry.value, '', '']);
   }
   return rows;
 }

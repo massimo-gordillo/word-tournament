@@ -50,9 +50,11 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "649437ab-99cd-4f2c-a0ec-26edec214936"
+        "projectId": "649437ab-99cd-4f2c-a0ec-26edec214936" //dev build
+        //"projectId": "8bd4788a-fa0c-42e6-9f9b-89685cd2840d" //production eas url
+
       }
     },
-    "owner": "unununium"
+    "owner": "mount-everest-games"
   }
 }

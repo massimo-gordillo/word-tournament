@@ -18,7 +18,7 @@ async function main() {
   await fs.writeFile(outputPath, `${csv}\n`, 'utf8');
 
   console.log(`Exported ${entries.length} copy rows to ${outputPath}`);
-  console.log('CSV columns: key, default');
+  console.log('CSV columns: key, default, ben prefered, dev override');
 }
 
 main().catch(error => {
