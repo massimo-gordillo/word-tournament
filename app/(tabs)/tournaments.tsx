@@ -7,6 +7,7 @@ import { useAppConfig } from '@/contexts/ConfigContext';
 import { TournamentListItem } from '@/components/TournamentListItem';
 import { Search } from 'lucide-react-native';
 import { formatDateShort } from '@/lib/dateUtils';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 interface Tournament {
   id: string;
@@ -118,7 +119,7 @@ export default function OngoingTournamentsScreen() {
 
   const handleJoinTournament = async () => {
     if (!joinCode.trim()) {
-      setJoinError('Please enter a join code');
+      setJoinError(copy.tournaments.joinCodeEmpty);
       return;
     }
 
@@ -132,23 +133,23 @@ export default function OngoingTournamentsScreen() {
     setJoiningTournament(false);
 
     if (error) {
-      const message = error.message || 'Unable to join tournament';
+      const message = error.message || copy.tournaments.joinGenericError;
       if (message.includes('already in this tournament')) {
-        setJoinError('You are already in this tournament');
+        setJoinError(copy.tournaments.alreadyInTournament);
         return;
       }
       if (message.includes('maximum number of tournaments')) {
         const max = config?.maxTournamentsPerUser ?? 4;
-        setJoinError(`You are already in the maximum number of tournaments (${max})`);
+        setJoinError(fillCopyTemplate(copy.tournaments.maxTournamentsTemplate, { max }));
         return;
       }
       if (message.includes('tournament is full')) {
         const maxPlayers = config?.maxParticipantsPerTournament ?? 15;
-        setJoinError(`This tournament is full (${maxPlayers} players max)`);
+        setJoinError(fillCopyTemplate(copy.tournaments.tournamentFullTemplate, { max: maxPlayers }));
         return;
       }
       if (message.includes('Invalid or inactive join code')) {
-        setJoinError('Invalid join code');
+        setJoinError(copy.tournaments.invalidJoinCode);
         return;
       }
       setJoinError(message);
@@ -176,10 +177,10 @@ export default function OngoingTournamentsScreen() {
   };
 
   const getStatusText = (tournament: Tournament) => {
-    if (tournament.status === 'active') return 'Active';
-    if (tournament.status === 'closed') return 'Closed';
+    if (tournament.status === 'active') return copy.tournaments.statusActive;
+    if (tournament.status === 'closed') return copy.tournaments.statusClosed;
     if (tournament.status === 'draft') {
-      return tournament.created_by === user?.id ? 'Draft' : 'Joined';
+      return tournament.created_by === user?.id ? copy.tournaments.statusDraft : copy.tournaments.statusJoined;
     }
     return tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1);
   };
@@ -203,7 +204,7 @@ export default function OngoingTournamentsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Joined Tournaments</Text>
+        <Text style={styles.title}>{copy.tournaments.headerTitle}</Text>
         <TouchableOpacity
           style={styles.joinButton}
           onPress={() => {
@@ -211,7 +212,7 @@ export default function OngoingTournamentsScreen() {
           }}
         >
           <Search size={20} color="#fff" />
-          <Text style={styles.joinButtonText}>Join by Code</Text>
+          <Text style={styles.joinButtonText}>{copy.tournaments.joinByCode}</Text>
         </TouchableOpacity>
       </View>
 
@@ -227,10 +228,8 @@ export default function OngoingTournamentsScreen() {
           <>
             {totalOngoingCount === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No joined tournaments</Text>
-                <Text style={styles.emptySubtext}>
-                  Join a tournament using a code
-                </Text>
+                <Text style={styles.emptyText}>{copy.tournaments.emptyTitle}</Text>
+                <Text style={styles.emptySubtext}>{copy.tournaments.emptySubtext}</Text>
               </View>
             ) : null}
 
@@ -241,7 +240,7 @@ export default function OngoingTournamentsScreen() {
                   onPress={() => setShowOngoing(prev => !prev)}
                 >
                   <Text style={styles.sectionHeaderText}>
-                    Ongoing Tournaments ({totalOngoingCount})
+                    {fillCopyTemplate(copy.tournaments.ongoingSection, { count: totalOngoingCount })}
                   </Text>
                   <Text style={styles.sectionHeaderChevron}>{showOngoing ? '˄' : '˅'}</Text>
                 </TouchableOpacity>
@@ -260,7 +259,7 @@ export default function OngoingTournamentsScreen() {
                         key={tournament.id}
                         title={
                           tournament.created_by === user?.id
-                            ? 'Your Tournament'
+                            ? copy.tournaments.yourTournament
                             : tournament.name
                         }
                         showWinnerTrophy={wonTournamentIds.has(tournament.id)}
@@ -271,7 +270,7 @@ export default function OngoingTournamentsScreen() {
                         )}
                         durationLabel={durationLabel}
                         endDateLabel={endDateLabel}
-                        secondaryText={`Code: ${tournament.join_code}`}
+                        secondaryText={`${copy.tournaments.codeSecondaryPrefix}${tournament.join_code}`}
                         onPress={() =>
                           router.push({
                             pathname: '/tournament/[id]',
@@ -291,7 +290,9 @@ export default function OngoingTournamentsScreen() {
                   onPress={() => setShowCompleted(prev => !prev)}
                 >
                   <Text style={styles.sectionHeaderText}>
-                    Recently Completed Tournaments ({recentlyCompletedTournaments.length})
+                    {fillCopyTemplate(copy.tournaments.completedSection, {
+                      count: recentlyCompletedTournaments.length,
+                    })}
                   </Text>
                   <Text style={styles.sectionHeaderChevron}>{showCompleted ? '˄' : '˅'}</Text>
                 </TouchableOpacity>
@@ -310,7 +311,7 @@ export default function OngoingTournamentsScreen() {
                         key={tournament.id}
                         title={
                           tournament.created_by === user?.id
-                            ? 'Your Tournament'
+                            ? copy.tournaments.yourTournament
                             : tournament.name
                         }
                         showWinnerTrophy={wonTournamentIds.has(tournament.id)}
@@ -321,7 +322,7 @@ export default function OngoingTournamentsScreen() {
                         )}
                         durationLabel={durationLabel}
                         endDateLabel={endDateLabel}
-                        secondaryText={`Code: ${tournament.join_code}`}
+                        secondaryText={`${copy.tournaments.codeSecondaryPrefix}${tournament.join_code}`}
                         onPress={() =>
                           router.push({
                             pathname: '/tournament/[id]',
@@ -345,12 +346,12 @@ export default function OngoingTournamentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Join Tournament</Text>
-            <Text style={styles.modalSubtitle}>Enter the tournament join code</Text>
+            <Text style={styles.modalTitle}>{copy.tournaments.joinModalTitle}</Text>
+            <Text style={styles.modalSubtitle}>{copy.tournaments.joinModalSubtitle}</Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Join Code (e.g., ABC123)"
+              placeholder={copy.tournaments.joinPlaceholder}
               placeholderTextColor="#999"
               value={joinCode}
               onChangeText={(text) => setJoinCode(text.toUpperCase())}
@@ -371,7 +372,7 @@ export default function OngoingTournamentsScreen() {
                 }}
                 disabled={joiningTournament}
               >
-                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                <Text style={styles.modalButtonTextCancel}>{copy.tournaments.cancel}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -382,7 +383,7 @@ export default function OngoingTournamentsScreen() {
                 {joiningTournament ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.modalButtonTextJoin}>Join</Text>
+                  <Text style={styles.modalButtonTextJoin}>{copy.tournaments.join}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -398,17 +399,16 @@ export default function OngoingTournamentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Tournament limit reached</Text>
+            <Text style={styles.modalTitle}>{copy.tournaments.limitModalTitle}</Text>
             <Text style={styles.modalSubtitle}>
-              You have hit your limit of {limitQuantity} continuous tournaments. Delete a draft tournament
-              you've created, leave a tournament, or wait for an ongoing tournament to complete.
+              {fillCopyTemplate(copy.tournaments.limitModalBody, { max: limitQuantity })}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => setLimitModalVisible(false)}
               >
-                <Text style={styles.modalButtonTextCancel}>OK</Text>
+                <Text style={styles.modalButtonTextCancel}>{copy.tournaments.ok}</Text>
               </TouchableOpacity>
             </View>
           </View>

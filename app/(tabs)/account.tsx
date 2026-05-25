@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronRight, FileText, LogOut, Save, Scale } from 'lucide-react-native';
 import { AppColors } from '@/constants/colors';
+import { LogOut, Save } from 'lucide-react-native';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 export default function AccountScreen() {
   const MIN_DISPLAY_NAME_LENGTH = 4;
@@ -42,15 +44,19 @@ export default function AccountScreen() {
 
   const handleUpdateProfile = async () => {
     if (!displayName.trim()) {
-      setError('Display name cannot be empty');
+      setError(copy.account.emptyDisplayName);
       return;
     }
     if (displayName.trim().length < MIN_DISPLAY_NAME_LENGTH) {
-      setError(`Display name must be at least ${MIN_DISPLAY_NAME_LENGTH} characters`);
+      setError(
+        fillCopyTemplate(copy.account.displayNameMinError, { min: MIN_DISPLAY_NAME_LENGTH }),
+      );
       return;
     }
     if (displayName.trim().length > MAX_DISPLAY_NAME_LENGTH) {
-      setError(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or less`);
+      setError(
+        fillCopyTemplate(copy.account.displayNameMaxError, { max: MAX_DISPLAY_NAME_LENGTH }),
+      );
       return;
     }
 
@@ -70,7 +76,7 @@ export default function AccountScreen() {
       return;
     }
 
-    setSuccess('Profile updated successfully');
+    setSuccess(copy.account.successUpdated);
     setTimeout(() => setSuccess(''), 3000);
   };
 
@@ -95,7 +101,7 @@ export default function AccountScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Account</Text>
+        <Text style={styles.title}>{copy.account.title}</Text>
       </View>
 
       <ScrollView
@@ -105,21 +111,21 @@ export default function AccountScreen() {
         }
       >
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Email</Text>
+        <Text style={styles.sectionTitle}>{copy.account.emailSection}</Text>
 
         <Text style={styles.email}>{user?.email}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Information</Text>
+          <Text style={styles.sectionTitle}>{copy.account.profileSection}</Text>
 
           <View style={styles.formCard}>
-            <Text style={styles.inputLabel}>Display Name</Text>
+            <Text style={styles.inputLabel}>{copy.account.displayNameLabel}</Text>
             <TextInput
               style={styles.input}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="Your display name"
+              placeholder={copy.account.placeholder}
               placeholderTextColor={AppColors.text.subtle}
               editable={!saving}
               maxLength={MAX_DISPLAY_NAME_LENGTH}
@@ -138,7 +144,7 @@ export default function AccountScreen() {
               ) : (
                 <>
                   <Save size={20} color={AppColors.text.inverse} />
-                  <Text style={styles.buttonText}>Save Changes</Text>
+                  <Text style={styles.buttonText}>{copy.account.saveChanges}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -146,27 +152,27 @@ export default function AccountScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Actions</Text>
+          <Text style={styles.sectionTitle}>{copy.account.sectionActions}</Text>
 
           <TouchableOpacity
             style={styles.signOutButton}
             onPress={handleSignOut}
           >
             <LogOut size={20} color={AppColors.status.error} />
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Text style={styles.signOutText}>{copy.account.signOut}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Information</Text>
+          <Text style={styles.sectionTitle}>{copy.account.appInfoSection}</Text>
 
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Version</Text>
+              <Text style={styles.infoLabel}>{copy.account.versionLabel}</Text>
               <Text style={styles.infoValue}>1.0.0</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>User ID</Text>
+              <Text style={styles.infoLabel}>{copy.account.userIdLabel}</Text>
               <Text style={styles.infoValue}>{user?.id.substring(0, 8)}...</Text>
             </View>
           </View>

@@ -30,6 +30,7 @@ import {
   type TournamentChatMessage,
 } from '@/components/TournamentChatSection';
 import { devLog } from '@/utils/logger';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 import { withTimeout } from '@/lib/requestTimeout';
 
 const NO_SUBMISSION_PENALTY_LABEL = 'NO SUBMISSION - PENALTY';
@@ -175,7 +176,7 @@ export default function TournamentDetailScreen() {
 
       const participantDetails = allParticipants.map(p => ({
         user_id: p.user_id,
-        display_name: usersMap.get(p.user_id) || 'Unknown',
+        display_name: usersMap.get(p.user_id) || copy.tournamentDetail.unknownPlayer,
         forfeited: forfeitedMap.get(p.user_id) || false,
         forfeited_at_date: p.forfeited_at_date ?? null,
       }));
@@ -197,7 +198,7 @@ export default function TournamentDetailScreen() {
       const allSubmissionsWithNames: Submission[] =
         allSubmissionsData?.map(s => ({
           ...s,
-          display_name: usersMap.get(s.user_id) || 'Unknown',
+          display_name: usersMap.get(s.user_id) || copy.tournamentDetail.unknownPlayer,
         })) ?? [];
 
       setAllSubmissions(allSubmissionsWithNames);
@@ -343,7 +344,7 @@ export default function TournamentDetailScreen() {
               message_type: row.message_type as 'chat' | 'result',
               submission_date: row.submission_date,
               created_at: row.created_at,
-              display_name: profile?.display_name ?? 'Unknown',
+              display_name: profile?.display_name ?? copy.tournamentDetail.unknownPlayer,
               daily_submission_id: row.daily_submission_id ?? null,
               submission_text: sub?.submission_text ?? null,
               wordle_score: sub?.wordle_score ?? null,
@@ -448,7 +449,7 @@ export default function TournamentDetailScreen() {
   if (!tournament) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>{loadError || 'Tournament not found'}</Text>
+        <Text>{loadError || {copy.tournamentDetail.notFound}}</Text>
         <TouchableOpacity style={styles.retryLoadButton} onPress={() => void loadTournamentData()}>
           <Text style={styles.retryLoadButtonText}>Try Again</Text>
         </TouchableOpacity>
@@ -478,17 +479,17 @@ export default function TournamentDetailScreen() {
   const getPlayerStatus = (userId: string) => {
     const participant = participants.find(p => p.user_id === userId);
     if (participant?.forfeited) {
-      return 'Forfeited';
+      return copy.tournamentDetail.playerStatusForfeited;
     }
     const todayRow = todaySubmissions.find(s => s.user_id === userId);
     const isPenaltyRow = todayRow?.submission_text === NO_SUBMISSION_PENALTY_LABEL;
     if (todaySubmittedIds.has(userId) && !isPenaltyRow) {
-      return 'Submitted';
+      return copy.tournamentDetail.playerStatusSubmitted;
     }
     if (resultsReady) {
-      return 'No submission';
+      return copy.tournamentDetail.playerStatusNoSubmission;
     }
-    return 'Waiting';
+    return copy.tournamentDetail.playerStatusWaiting;
   };
 
   const handleConfirmForfeit = async () => {
@@ -505,9 +506,12 @@ export default function TournamentDetailScreen() {
 
       if (error) {
         if (error.message?.includes('ALREADY_FORFEITED') || error.message?.toLowerCase().includes('already forfeited')) {
-          Alert.alert('Already forfeited', 'You have already forfeited this tournament.');
+          Alert.alert(
+            copy.tournamentDetail.forfeitAlreadyTitle,
+            copy.tournamentDetail.forfeitAlreadyBody,
+          );
         } else {
-          Alert.alert('Error', 'Could not forfeit the tournament. Please try again.');
+          Alert.alert(copy.tournamentDetail.forfeitErrorTitle, copy.tournamentDetail.forfeitErrorBody);
         }
         return;
       }
@@ -520,23 +524,17 @@ export default function TournamentDetailScreen() {
 
   const handleForfeitPress = () => {
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        'Are you sure you want to forfeit this tournament? This will mark you as forfeited and you will receive a -2 penalty for every remaining day of this tournament. This cannot be undone.',
-      );
+      const confirmed = window.confirm(copy.tournamentDetail.forfeitAlertBody);
       if (confirmed) {
         handleConfirmForfeit();
       }
       return;
     }
 
-    Alert.alert(
-      'Forfeit Tournament',
-      'Are you sure you want to forfeit this tournament? This will mark you as forfeited and you will receive a -2 penalty for every remaining day of this tournament. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Forfeit', style: 'destructive', onPress: handleConfirmForfeit },
-      ],
-    );
+    Alert.alert(copy.tournamentDetail.forfeitAlertTitle, copy.tournamentDetail.forfeitAlertBody, [
+      { text: copy.tournamentDetail.cancel, style: 'cancel' },
+      { text: copy.tournamentDetail.forfeit, style: 'destructive', onPress: handleConfirmForfeit },
+    ]);
   };
 
   const handleSendChat = async (text: string) => {
@@ -571,12 +569,12 @@ export default function TournamentDetailScreen() {
   const cutoffHourEst = config?.cutoffHourEst ?? 23;
   const cutoffLabel =
     cutoffHourEst === 0
-      ? 'midnight'
+      ? copy.tournamentDetail.cutoffMidnight
       : cutoffHourEst === 12
-        ? 'noon'
+        ? copy.tournamentDetail.cutoffNoon
         : cutoffHourEst > 12
-          ? `${cutoffHourEst - 12} PM`
-          : `${cutoffHourEst} AM`;
+          ? fillCopyTemplate(copy.tournamentDetail.cutoffPmTemplate, { hour: cutoffHourEst - 12 })
+          : fillCopyTemplate(copy.tournamentDetail.cutoffAmTemplate, { hour: cutoffHourEst });
 
   return (
     <View style={styles.container}>
@@ -632,7 +630,7 @@ export default function TournamentDetailScreen() {
               },
             ]}
           >
-            <Text style={styles.fanfareText}>Champion! 🏆</Text>
+            <Text style={styles.fanfareText}>{copy.tournamentDetail.championFanfare}</Text>
           </Animated.View>
         </View>
       )}
@@ -642,10 +640,11 @@ export default function TournamentDetailScreen() {
         </TouchableOpacity>
         <View style={styles.headerText}>
           <Text style={styles.title}>{tournament.name}</Text>
-          <Text style={styles.headerDate}>{tournament.status === 'active' ? 
-          `Ends on: ${formatDateShort(tournament.end_date)}` :
-          `Ended on: ${formatDateShort(tournament.end_date)}`
-        }</Text>
+          <Text style={styles.headerDate}>
+            {tournament.status === 'active'
+              ? `${copy.tournamentDetail.headerEndsOn}${formatDateShort(tournament.end_date)}`
+              : `${copy.tournamentDetail.headerEndedOn}${formatDateShort(tournament.end_date)}`}
+          </Text>
         </View>
       </View>
 
@@ -668,9 +667,9 @@ export default function TournamentDetailScreen() {
 
         {!resultsReady && tournament.status === 'active' && (
           <View style={styles.waitingCard}>
-            <Text style={styles.waitingText}>Waiting for today's submissions...</Text>
+            <Text style={styles.waitingText}>{copy.tournamentDetail.resultsWaitingTitle}</Text>
             <Text style={styles.waitingSubtext}>
-              Results will be available after all active players submit or at {cutoffLabel} EST
+              {fillCopyTemplate(copy.tournamentDetail.resultsWaitingSubtext, { cutoff: cutoffLabel })}
             </Text>
           </View>
         )}
@@ -683,19 +682,19 @@ export default function TournamentDetailScreen() {
             <Trophy size={20} color="#1a1a1a" />
             <Text style={styles.sectionTitle}>
               {isCompleted
-                ? 'Final Standings'
+                ? copy.tournamentDetail.leaderboardFinal
                 : resultsReady
-                ? "Today's Leaderboard"
-                : startedToday
-                ? "Leaderboard (Waiting)"
-                : "Yesterday's Leaderboard (Waiting)"}
+                  ? copy.tournamentDetail.leaderboardToday
+                  : startedToday
+                    ? copy.tournamentDetail.leaderboardWaiting
+                    : copy.tournamentDetail.leaderboardYesterdayWaiting}
             </Text>
           </View>
 
           
 
           {scores.length === 0 ? (
-            <Text style={styles.emptyText}>No scores yet</Text>
+            <Text style={styles.emptyText}>{copy.tournamentDetail.emptyNoScores}</Text>
           ) : (
             scores.map((score, index) => (
               <View key={score.user_id} style={styles.scoreCard}>
@@ -709,12 +708,14 @@ export default function TournamentDetailScreen() {
                 <View style={styles.scoreInfo}>
                   <Text style={styles.scoreName}>
                     {score.display_name}
-                    {score.user_id === user?.id ? ' (You)' : ''}
-                    {score.forfeited && <Text style={styles.forfeitedText}> (Forfeit)</Text>}
+                    {score.user_id === user?.id ? copy.tournamentDetail.youSuffix : ''}
+                    {score.forfeited && (
+                      <Text style={styles.forfeitedText}>{copy.tournamentDetail.forfeitSuffix}</Text>
+                    )}
                   </Text>
                 </View>
                 <Text style={styles.scorePoints}>
-                  {`${score.total_score} pts`}
+                  {`${score.total_score}${copy.tournamentDetail.pointsSuffix}`}
                 </Text>
               </View>
             ))
@@ -733,10 +734,13 @@ export default function TournamentDetailScreen() {
 
         {participants.length > 0 && tournament.status === 'active' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Players</Text>
+            <Text style={styles.sectionTitle}>{copy.tournamentDetail.playersSection}</Text>
             {participants.map(p => (
               <View key={p.user_id} style={styles.playerRow}>
-                <Text style={styles.playerName}>{p.display_name}{p.user_id === user?.id ? ' (You)' : ''}</Text>
+                <Text style={styles.playerName}>
+                  {p.display_name}
+                  {p.user_id === user?.id ? copy.tournamentDetail.youSuffix : ''}
+                </Text>
                 <Text style={styles.playerStatus}>{getPlayerStatus(p.user_id)}</Text>
               </View>
             ))}
@@ -749,7 +753,7 @@ export default function TournamentDetailScreen() {
             style={styles.collapsibleHeader}
             onPress={() => setAllSubmissionsCollapsed(prev => !prev)}
           >
-            <Text style={styles.sectionTitle}>All Submissions</Text>
+            <Text style={styles.sectionTitle}>{copy.tournamentDetail.allSubmissions}</Text>
             {allSubmissionsCollapsed ? (
               <ChevronDown size={20} color="#1a1a1a" />
             ) : (
@@ -759,9 +763,9 @@ export default function TournamentDetailScreen() {
           {!allSubmissionsCollapsed && (
             <>
               {participants.length === 0 ? (
-                <Text style={styles.emptyText}>No players in this tournament</Text>
+                <Text style={styles.emptyText}>{copy.tournamentDetail.emptyNoPlayers}</Text>
               ) : allSubmissions.length === 0 ? (
-                <Text style={styles.emptyText}>No submissions yet</Text>
+                <Text style={styles.emptyText}>{copy.tournamentDetail.emptyNoSubmissions}</Text>
               ) : (
                 <>
                   {(() => {
@@ -807,7 +811,7 @@ export default function TournamentDetailScreen() {
                     const orderedDays = [...days].reverse();
                     if (orderedDays.length === 0) {
                       return (
-                        <Text style={styles.emptyText}>Waiting on Submissions</Text>
+                        <Text style={styles.emptyText}>{copy.tournamentDetail.waitingSubmissionsDay}</Text>
                       );
                     }
 
@@ -870,7 +874,7 @@ export default function TournamentDetailScreen() {
             style={styles.collapsibleHeader}
             onPress={() => setTournamentInfoCollapsed(prev => !prev)}
           >
-            <Text style={styles.sectionTitle}>Tournament Info</Text>
+            <Text style={styles.sectionTitle}>{copy.tournamentDetail.tournamentInfo}</Text>
             {tournamentInfoCollapsed ? (
               <ChevronDown size={20} color="#1a1a1a" />
             ) : (
@@ -879,15 +883,15 @@ export default function TournamentDetailScreen() {
           </TouchableOpacity>
           {!tournamentInfoCollapsed && (
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Status</Text>
+              <Text style={styles.infoLabel}>{copy.tournamentDetail.statusLabel}</Text>
               <Text style={styles.infoValue}>{tournament.status.toUpperCase()}</Text>
-              <Text style={styles.infoLabel}>Dates</Text>
+              <Text style={styles.infoLabel}>{copy.tournamentDetail.datesLabel}</Text>
               <Text style={styles.infoValue}>
                 {formatDateShort(tournament.start_date)} - {formatDateShort(
                   tournament.end_date,
                 )}
               </Text>
-              <Text style={styles.infoLabel}>Join Code</Text>
+              <Text style={styles.infoLabel}>{copy.tournamentDetail.joinCodeLabel}</Text>
               <Text style={styles.infoValue}>{tournament.join_code}</Text>
             </View>
           )}
@@ -901,7 +905,9 @@ export default function TournamentDetailScreen() {
                 disabled={forfeitLoading}
               >
                 <Text style={styles.forfeitButtonText}>
-                  {forfeitLoading ? 'Forfeiting...' : 'Forfeit Tournament'}
+                  {forfeitLoading
+                    ? copy.tournamentDetail.forfeiting
+                    : copy.tournamentDetail.forfeitButton}
                 </Text>
               </TouchableOpacity>
             </View>

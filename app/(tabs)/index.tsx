@@ -18,6 +18,7 @@ import { getTodayDateEST, getTimeUntilCutoff } from '@/lib/dateUtils';
 import { useAppConfig } from '@/contexts/ConfigContext';
 import { DailySubmissionCard } from '@/components/DailySubmissionCard';
 import { devLog } from '@/utils/logger';
+import { copy } from '@/app/copy/strings';
 import { withTimeout } from '@/lib/requestTimeout';
 
 interface Submission {
@@ -31,6 +32,7 @@ const TODAY_SUBMISSION_TIMEOUT_MS = 12000;
 
 /** Placeholder for tournament_chat.message when message_type is result (grid lives on daily_submissions). */
 const RESULT_CHAT_PLACEHOLDER_MESSAGE = 'result';
+const PENDING_SIGNUP_INTRO_KEY = 'wt_pending_signup_intro';
 
 export default function DailySubmissionScreen() {
   const { user } = useAuth();
@@ -98,11 +100,11 @@ export default function DailySubmissionScreen() {
 
     if (pastCutoff) {
       setIsPastCutoff(true);
-      setTimeUntilCutoff('Submission window closed, opens tomorrow at 12:01AM EST');
+      setTimeUntilCutoff(copy.dailySubmission.closedWindow);
       return;
     }
 
-    setTimeUntilCutoff(`${hours}h ${minutes}m until cutoff`);
+    setTimeUntilCutoff(`${hours}h ${minutes}m ${copy.dailySubmission.cutoffCountdownSuffix}`);
     setIsPastCutoff(false);
   }, [config?.cutoffHourEst]);
 
@@ -324,12 +326,12 @@ export default function DailySubmissionScreen() {
 
   const handleSubmit = async () => {
     if (!submissionText.trim()) {
-      setError('Please paste your result for today\'s Word Game');
+      setError(copy.dailySubmission.emptySubmissionError);
       return;
     }
 
     if (isPastCutoff) {
-      setError('Submission for today is closed, you can submit tomorrow\'s starting at 12:01AM EST.');
+      setError(copy.dailySubmission.pastCutoffError);
       return;
     }
 
@@ -338,14 +340,14 @@ export default function DailySubmissionScreen() {
 
     const parsed = parseWordle(submissionText);
     if (!parsed) {
-      setError('Invalid Word Game grid. Please paste the complete result including the emoji rows.');
+      setError(copy.dailySubmission.invalidGridError);
       setLoading(false);
       return;
     }
 
     if (!parsed.normalizedGrid) {
       devLog('parseWord: missing normalizedGrid on parsed result', parsed);
-      setError('Something went wrong parsing your result. Please try pasting it again.');
+      setError(copy.dailySubmission.parseFailedError);
       setLoading(false);
       return;
     }
@@ -369,10 +371,10 @@ export default function DailySubmissionScreen() {
     setLoading(false);
 
     if (dbError) {
-      const message = dbError.message || 'Unable to save submission';
+      const message = dbError.message || copy.dailySubmission.dbSaveFallbackError;
       devLog('handleSubmit: backend error', { message, dbError });
       if (message.toLowerCase().includes('invalid word grid')) {
-        setError('Invalid Word grid. Please paste the complete result including the emoji rows.');
+        setError(copy.dailySubmission.dbInvalidGridError);
       } else {
         setError(message);
       }
@@ -397,25 +399,24 @@ export default function DailySubmissionScreen() {
     >
       <View style={styles.modalBackdrop}>
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Welcome</Text>
+          <Text style={styles.modalTitle}>{copy.dailySubmission.introModal.title}</Text>
+          <Text style={styles.modalBodyTitle}>{copy.dailySubmission.introModal.submitSectionTitle}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.submitStep1}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.submitStep2}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.submitStep3}</Text>
 
-          <Text style={styles.modalBodyTitle}>How to submit your score</Text>
-          <Text style={styles.modalBodyText}>1. Play today's Word-L Game on the NYT website</Text>
-          <Text style={styles.modalBodyText}>2. Tap the Share button</Text>
-          <Text style={styles.modalBodyText}>3. Open this app and paste the result here</Text>
+          <Text style={styles.modalBodyTitle}>{copy.dailySubmission.introModal.createSectionTitle}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.createStep1}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.createStep2}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.createStep3}</Text>
 
-          <Text style={styles.modalBodyTitle}>How to create a tournament</Text>
-          <Text style={styles.modalBodyText}>1. Open the Manage tab and create a tournament</Text>
-          <Text style={styles.modalBodyText}>2. Copy the join code and share with your friends</Text>
-          <Text style={styles.modalBodyText}>3. View the tournament in drafts and start it when you're ready</Text>
-
-          <Text style={styles.modalBodyTitle}>How to join a tournament</Text>
-          <Text style={styles.modalBodyText}>1. Ask your friends for the tournament join code</Text>
-          <Text style={styles.modalBodyText}>2. Go to the ongoing tournaments tab and click 'join by code'</Text>
-          <Text style={styles.modalBodyText}>3. Paste the code and click 'join'. Your friend will start the tournament when everyone has joined</Text>
+          <Text style={styles.modalBodyTitle}>{copy.dailySubmission.introModal.joinSectionTitle}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.joinStep1}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.joinStep2}</Text>
+          <Text style={styles.modalBodyText}>{copy.dailySubmission.introModal.joinStep3}</Text>
 
           <TouchableOpacity style={styles.modalButton} onPress={dismissIntroModal}>
-            <Text style={styles.modalButtonText}>Got it</Text>
+            <Text style={styles.modalButtonText}>{copy.dailySubmission.introModal.dismissButton}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -444,7 +445,7 @@ export default function DailySubmissionScreen() {
           }
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Today's Submission</Text>
+            <Text style={styles.title}>{copy.dailySubmission.todaySubmissionTitle}</Text>
             <Text style={styles.timer}>{timeUntilCutoff}</Text>
           </View>
           {loadError ? (
@@ -454,7 +455,7 @@ export default function DailySubmissionScreen() {
           ) : null}
 
           <DailySubmissionCard
-            dateLabel="Today"
+            dateLabel={copy.dailySubmission.todayDateLabel}
             didSubmit
             score={todaySubmission.wordle_score}
             submissionText={todaySubmission.submission_text}
@@ -462,10 +463,10 @@ export default function DailySubmissionScreen() {
 
           <View style={styles.infoCard}>
             <Text style={styles.infoText}>
-              Your score has been applied to all active tournaments you're participating in.
+              {copy.dailySubmission.scoreAppliedInfo}
             </Text>
             <Text style={styles.infoText}>
-              Come back tomorrow for your next submission!
+              {copy.dailySubmission.nextSubmissionInfo}
             </Text>
           </View>
         </ScrollView>
@@ -483,15 +484,15 @@ export default function DailySubmissionScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Daily Word Game Submission</Text>
+          <Text style={styles.title}>{copy.dailySubmission.formTitle}</Text>
           <Text style={styles.timer}>{timeUntilCutoff}</Text>
         </View>
 
         <View style={styles.instructionsCard}>
-          <Text style={styles.instructionsTitle}>How to submit:</Text>
-          <Text style={styles.instructionsText}>1. Play today's Word Game</Text>
-          <Text style={styles.instructionsText}>2. Tap the Share button</Text>
-          <Text style={styles.instructionsText}>3. Paste the complete result below</Text>
+          <Text style={styles.instructionsTitle}>{copy.dailySubmission.instructionsTitle}</Text>
+          <Text style={styles.instructionsText}>{copy.dailySubmission.instruction1}</Text>
+          <Text style={styles.instructionsText}>{copy.dailySubmission.instruction2}</Text>
+          <Text style={styles.instructionsText}>{copy.dailySubmission.instruction3}</Text>
         </View>
 
         <View style={styles.formCard}>
@@ -511,7 +512,7 @@ export default function DailySubmissionScreen() {
           ) : null}
           <TextInput
             style={styles.textArea}
-            placeholder={isPastCutoff ? "Submission window closed" : "Paste your Word Game result here..."}
+            placeholder={isPastCutoff ? copy.dailySubmission.closedInputPlaceholder : copy.dailySubmission.openInputPlaceholder}
             placeholderTextColor="#999"
             value={submissionText}
             onChangeText={setSubmissionText}
@@ -531,7 +532,7 @@ export default function DailySubmissionScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.buttonText}>
-                {isPastCutoff ? 'Submission Closed' : 'Submit'}
+                {isPastCutoff ? copy.dailySubmission.closedSubmitButton : copy.dailySubmission.submitButton}
               </Text>
             )}
           </TouchableOpacity>

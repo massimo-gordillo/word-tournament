@@ -11,6 +11,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
+import { copy } from '@/app/copy/strings';
 
 type Variant = 'signup' | 'recovery';
 
@@ -28,7 +29,7 @@ export default function CheckEmailScreen() {
 
   const handleResend = async () => {
     if (!email) {
-      setError('Missing email. Go back and try again.');
+      setError(copy.auth.checkEmail.missingEmail);
       return;
     }
 
@@ -71,11 +72,10 @@ export default function CheckEmailScreen() {
     setLoading(false);
   };
 
-  const title = variant === 'signup' ? 'Confirm your email' : 'Check your email';
+  const title =
+    variant === 'signup' ? copy.auth.checkEmail.titleSignup : copy.auth.checkEmail.titleRecovery;
   const body =
-    variant === 'signup'
-      ? 'We sent a confirmation link to your inbox. Open it on this device to finish signing up.'
-      : 'If an account exists for that address, we sent a password reset link. Open it on this device to choose a new password.';
+    variant === 'signup' ? copy.auth.checkEmail.bodySignup : copy.auth.checkEmail.bodyRecovery;
 
   return (
     <KeyboardAvoidingView
@@ -88,7 +88,7 @@ export default function CheckEmailScreen() {
         {email ? <Text style={styles.email}>{email}</Text> : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {sent ? <Text style={styles.sent}>Message sent.</Text> : null}
+        {sent ? <Text style={styles.sent}>{copy.auth.checkEmail.messageSent}</Text> : null}
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -98,13 +98,14 @@ export default function CheckEmailScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Resend email</Text>
+            <Text style={styles.buttonText}>{copy.auth.checkEmail.resendButton}</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace('/(auth)')} disabled={loading}>
           <Text style={styles.linkText}>
-            Back to <Text style={styles.linkTextBold}>Sign In</Text>
+            {copy.auth.checkEmail.backPrefix}{' '}
+            <Text style={styles.linkTextBold}>{copy.auth.checkEmail.signInBold}</Text>
           </Text>
         </TouchableOpacity>
       </View>

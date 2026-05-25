@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
+import { copy } from '@/app/copy/strings';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ export default function ForgotPasswordScreen() {
 
   const handleSubmit = async () => {
     if (!email) {
-      setError('Please enter your email');
+      setError(copy.auth.forgotPassword.enterEmailError);
       return;
     }
 
@@ -51,13 +52,13 @@ export default function ForgotPasswordScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Forgot password</Text>
-        <Text style={styles.subtitle}>{"We'll email you a link to reset it."}</Text>
+        <Text style={styles.title}>{copy.auth.forgotPassword.title}</Text>
+        <Text style={styles.subtitle}>{copy.auth.forgotPassword.subtitle}</Text>
 
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder={copy.auth.forgotPassword.emailPlaceholder}
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
@@ -77,13 +78,13 @@ export default function ForgotPasswordScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Send reset link</Text>
+              <Text style={styles.buttonText}>{copy.auth.forgotPassword.sendButton}</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.back()} disabled={loading}>
             <Text style={styles.linkText}>
-              <Text style={styles.linkTextBold}>Back to Sign In</Text>
+              <Text style={styles.linkTextBold}>{copy.auth.forgotPassword.backToSignIn}</Text>
             </Text>
           </TouchableOpacity>
         </View>

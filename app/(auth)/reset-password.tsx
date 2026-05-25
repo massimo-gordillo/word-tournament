@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { copy } from '@/app/copy/strings';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -45,17 +46,17 @@ export default function ResetPasswordScreen() {
 
   const handleSubmit = async () => {
     if (!password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError(copy.auth.resetPassword.fillAllFieldsError);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(copy.auth.resetPassword.passwordsMismatchError);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(copy.auth.resetPassword.passwordTooShortError);
       return;
     }
 
@@ -79,16 +80,13 @@ export default function ResetPasswordScreen() {
   if (!sessionReady) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.title}>Reset password</Text>
-        <Text style={styles.subtitle}>
-          Open the reset link from your email on this device. If you already did, try requesting a new
-          link from Forgot password.
-        </Text>
+        <Text style={styles.title}>{copy.auth.resetPassword.waitingTitle}</Text>
+        <Text style={styles.subtitle}>{copy.auth.resetPassword.waitingSubtitle}</Text>
         <TouchableOpacity onPress={() => router.replace('/(auth)/forgot-password')}>
-          <Text style={styles.linkTextBold}>Forgot password</Text>
+          <Text style={styles.linkTextBold}>{copy.auth.resetPassword.forgotPasswordLink}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondary} onPress={() => router.replace('/(auth)')}>
-          <Text style={styles.linkText}>Back to Sign In</Text>
+          <Text style={styles.linkText}>{copy.auth.resetPassword.backToSignIn}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -100,13 +98,13 @@ export default function ResetPasswordScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Choose a new password</Text>
-        <Text style={styles.subtitle}>Enter and confirm your new password.</Text>
+        <Text style={styles.title}>{copy.auth.resetPassword.chooseTitle}</Text>
+        <Text style={styles.subtitle}>{copy.auth.resetPassword.chooseSubtitle}</Text>
 
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="New password"
+            placeholder={copy.auth.resetPassword.newPasswordPlaceholder}
             placeholderTextColor="#999"
             value={password}
             onChangeText={setPassword}
@@ -118,7 +116,7 @@ export default function ResetPasswordScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Confirm new password"
+            placeholder={copy.auth.resetPassword.confirmPlaceholder}
             placeholderTextColor="#999"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -138,7 +136,7 @@ export default function ResetPasswordScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Update password</Text>
+              <Text style={styles.buttonText}>{copy.auth.resetPassword.updateButton}</Text>
             )}
           </TouchableOpacity>
         </View>

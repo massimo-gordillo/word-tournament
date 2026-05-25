@@ -3,6 +3,7 @@ import { Home, Trophy, BarChart3, User, Settings } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
 import { AppColors } from '@/constants/colors';
+import { copy } from '@/app/copy/strings';
 
 export default function TabLayout() {
   const { user, loading } = useAuth();
@@ -39,21 +40,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Submit',
+          title: copy.tabs.submit,
           tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="tournaments"
         options={{
-          title: 'Ongoing',
+          title: copy.tabs.ongoing,
           tabBarIcon: ({ size, color }) => <Trophy size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="manage"
         options={{
-          title: 'Manage',
+          title: copy.tabs.manage,
           tabBarIcon: ({ size, color }) => <Settings size={size} color={color} />,
         }}
         listeners={{
@@ -69,14 +70,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="stats"
         options={{
-          title: 'Statistics',
+          title: copy.tabs.statistics,
           tabBarIcon: ({ size, color }) => <BarChart3 size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Account',
+          title: copy.tabs.account,
           tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
         }}
       />

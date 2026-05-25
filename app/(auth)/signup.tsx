@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { markPendingSignupIntro } from '@/lib/pendingSignupIntro';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 export default function SignupScreen() {
   const MIN_DISPLAY_NAME_LENGTH = 4;
@@ -23,20 +24,21 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const pendingIntroKey = 'wt_pending_signup_intro';
 
   const handleSignup = async () => {
     if (!email || !displayName.trim() || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError(copy.auth.signup.fillAllFieldsError);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(copy.auth.signup.passwordsMismatchError);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(copy.auth.signup.passwordTooShortError);
       return;
     }
 
@@ -45,11 +47,19 @@ export default function SignupScreen() {
 
     const trimmedDisplayName = displayName.trim();
     if (trimmedDisplayName.length < MIN_DISPLAY_NAME_LENGTH) {
-      setError(`Display name must be at least ${MIN_DISPLAY_NAME_LENGTH} characters`);
+      setError(
+        fillCopyTemplate(copy.auth.signup.displayNameMinError, {
+          min: MIN_DISPLAY_NAME_LENGTH,
+        }),
+      );
       return;
     }
     if (trimmedDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
-      setError(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or less`);
+      setError(
+        fillCopyTemplate(copy.auth.signup.displayNameMaxError, {
+          max: MAX_DISPLAY_NAME_LENGTH,
+        }),
+      );
       return;
     }
     const emailRedirectTo = Linking.createURL('(tabs)');
@@ -104,13 +114,13 @@ export default function SignupScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Word Tournaments</Text>
+        <Text style={styles.title}>{copy.auth.signup.title}</Text>
+        <Text style={styles.subtitle}>{copy.auth.signup.subtitle}</Text>
 
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder={copy.auth.signup.emailPlaceholder}
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
@@ -122,7 +132,7 @@ export default function SignupScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Display name"
+            placeholder={copy.auth.signup.displayNamePlaceholder}
             placeholderTextColor="#999"
             value={displayName}
             onChangeText={setDisplayName}
@@ -134,7 +144,7 @@ export default function SignupScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Password (min 6 characters)"
+            placeholder={copy.auth.signup.passwordPlaceholder}
             placeholderTextColor="#999"
             value={password}
             autoCapitalize="none"
@@ -146,7 +156,7 @@ export default function SignupScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Confirm password"
+            placeholder={copy.auth.signup.confirmPasswordPlaceholder}
             placeholderTextColor="#999"
             value={confirmPassword}
             autoCapitalize="none"
@@ -166,13 +176,13 @@ export default function SignupScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
+              <Text style={styles.buttonText}>{copy.auth.signup.createButton}</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.back()} disabled={loading}>
             <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
+              {copy.auth.signup.alreadyHavePrefix} <Text style={styles.linkTextBold}>{copy.auth.signup.signInCta}</Text>
             </Text>
           </TouchableOpacity>
         </View>

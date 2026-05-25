@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Lock, Send } from 'lucide-react-native';
 import { DailySubmissionCard } from '@/components/DailySubmissionCard';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 /** Must match placeholder written for `tournament_chat.message` when `message_type` is `result`. */
 const RESULT_MESSAGE_PLACEHOLDER = 'result';
@@ -68,11 +69,11 @@ export function TournamentChatSection({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Tournament Chat</Text>
+      <Text style={styles.sectionTitle}>{copy.tournamentChat.sectionTitle}</Text>
 
       <View style={styles.feed}>
         {messages.length === 0 ? (
-          <Text style={styles.emptyText}>No messages yet</Text>
+          <Text style={styles.emptyText}>{copy.tournamentChat.emptyMessages}</Text>
         ) : (
           messages.map(msg => {
             if (msg.message_type === 'result') {
@@ -109,7 +110,9 @@ export function TournamentChatSection({
                             isSelf && styles.resultLockedBubbleTextSelf,
                           ]}
                         >
-                          {msg.display_name} has submitted their result
+                          {fillCopyTemplate(copy.tournamentChat.resultLockedTemplate, {
+                            name: msg.display_name,
+                          })}
                         </Text>
                       </View>
                     ) : hasSubmissionPayload ? (
@@ -136,7 +139,7 @@ export function TournamentChatSection({
                       <Text
                         style={[styles.resultFallbackText, isSelf && styles.resultLockedBubbleTextSelf]}
                       >
-                        Result unavailable
+                        {copy.tournamentChat.resultUnavailable}
                       </Text>
                     )}
                   </View>
@@ -170,7 +173,7 @@ export function TournamentChatSection({
             style={styles.input}
             value={draft}
             onChangeText={setDraft}
-            placeholder="Message…"
+            placeholder={copy.tournamentChat.messagePlaceholder}
             placeholderTextColor="#9ca3af"
             multiline
             maxLength={400}
@@ -181,7 +184,7 @@ export function TournamentChatSection({
             onPress={handleSend}
             disabled={sending || !draft.trim()}
             accessibilityRole="button"
-            accessibilityLabel="Send message"
+            accessibilityLabel={copy.tournamentChat.sendA11y}
           >
             {sending ? (
               <ActivityIndicator size="small" color="#fff" />

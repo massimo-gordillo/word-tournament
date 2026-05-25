@@ -8,6 +8,7 @@ import { useAppConfig } from '@/contexts/ConfigContext';
 import { devLog } from '@/utils/logger';
 import { formatDateShort } from '@/lib/dateUtils';
 import { TournamentListItem } from '@/components/TournamentListItem';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 interface Tournament {
   id: string;
@@ -29,12 +30,14 @@ type DurationOption = {
   days: number;
 };
 
-const DURATION_OPTIONS: DurationOption[] = [
-  { label: '3 days', days: 3 },
-  { label: '7 days', days: 7 },
-  { label: '2 weeks', days: 14 },
-  { label: '4 weeks', days: 28 },
-];
+function getDurationOptions(): DurationOption[] {
+  return [
+    { label: copy.manage.duration3, days: 3 },
+    { label: copy.manage.duration7, days: 7 },
+    { label: copy.manage.duration14, days: 14 },
+    { label: copy.manage.duration28, days: 28 },
+  ];
+}
 
 export default function ManageTournamentsScreen() {
   const { user } = useAuth();
@@ -46,7 +49,7 @@ export default function ManageTournamentsScreen() {
   const [loading, setLoading] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
-  const [duration, setDuration] = useState<DurationOption>(DURATION_OPTIONS[0]);
+  const [duration, setDuration] = useState<DurationOption>(() => getDurationOptions()[0]);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -213,7 +216,7 @@ export default function ManageTournamentsScreen() {
 
   const handleCreateTournament = async () => {
     if (!userDisplayName) {
-      setError('Unable to load user information');
+      setError(copy.manage.loadUserError);
       return;
     }
 
@@ -227,7 +230,9 @@ export default function ManageTournamentsScreen() {
     // Duration is inclusive of start day: e.g. 3 days starting Mar 11 → end Mar 13 (submit on 11, 12, 13)
     endDate.setDate(endDate.getDate() + duration.days - 1);
 
-    const tournamentName = `${userDisplayName}'s tournament`;
+    const tournamentName = fillCopyTemplate(copy.manage.defaultTournamentNameTemplate, {
+      name: userDisplayName,
+    });
 
     const startDateStr = today.toISOString().slice(0, 10);
     const endDateStr = endDate.toISOString().slice(0, 10);
@@ -240,10 +245,10 @@ export default function ManageTournamentsScreen() {
 
     if (createError) {
       setSaving(false);
-      const message = createError.message || 'Unable to create tournament';
+      const message = createError.message || copy.manage.createGenericError;
       if (message.includes('maximum number of tournaments')) {
         const max = config?.maxTournamentsPerUser ?? 4;
-        setError(`You are already in the maximum number of tournaments (${max})`);
+        setError(fillCopyTemplate(copy.manage.maxTournamentsError, { max }));
         return;
       }
       setError(message);
@@ -252,7 +257,7 @@ export default function ManageTournamentsScreen() {
 
     setSaving(false);
     setCreateModalVisible(false);
-    setDuration(DURATION_OPTIONS[0]);
+    setDuration(getDurationOptions()[0]);
     router.push({
       pathname: '/draft-tournament/[id]',
       params: { id: tournamentId, source: 'manage-menu' },
@@ -271,8 +276,8 @@ export default function ManageTournamentsScreen() {
           <View style={[styles.menuIconContainer, { backgroundColor: '#10b981' }]}>
             <Plus size={32} color="#fff" />
           </View>
-          <Text style={styles.menuCardTitle}>Create Tournament</Text>
-          <Text style={styles.menuCardSubtitle}>Start a new tournament</Text>
+          <Text style={styles.menuCardTitle}>{copy.manage.createTitle}</Text>
+          <Text style={styles.menuCardSubtitle}>{copy.manage.createSubtitle}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -285,8 +290,8 @@ export default function ManageTournamentsScreen() {
           <View style={[styles.menuIconContainer, { backgroundColor: '#f59e0b' }]}>
             <FileText size={32} color="#fff" />
           </View>
-          <Text style={styles.menuCardTitle}>Open Drafts</Text>
-          <Text style={styles.menuCardSubtitle}>Tournaments awaiting players</Text>
+          <Text style={styles.menuCardTitle}>{copy.manage.draftsTitle}</Text>
+          <Text style={styles.menuCardSubtitle}>{copy.manage.draftsSubtitle}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -299,8 +304,8 @@ export default function ManageTournamentsScreen() {
           <View style={[styles.menuIconContainer, { backgroundColor: '#6b7280' }]}>
             <History size={32} color="#fff" />
           </View>
-          <Text style={styles.menuCardTitle}>Past Tournaments</Text>
-          <Text style={styles.menuCardSubtitle}>View completed tournaments</Text>
+          <Text style={styles.menuCardTitle}>{copy.manage.pastTitle}</Text>
+          <Text style={styles.menuCardSubtitle}>{copy.manage.pastSubtitle}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -317,15 +322,15 @@ export default function ManageTournamentsScreen() {
         style={styles.backButton}
         onPress={() => setActiveView('menu')}
       >
-        <Text style={styles.backButtonText}>← Back to Menu</Text>
+        <Text style={styles.backButtonText}>{copy.manage.backToMenu}</Text>
       </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
       ) : draftTournaments.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No draft tournaments</Text>
-          <Text style={styles.emptySubtext}>Create a tournament to get started</Text>
+          <Text style={styles.emptyText}>{copy.manage.emptyDraftsTitle}</Text>
+          <Text style={styles.emptySubtext}>{copy.manage.emptyDraftsSubtext}</Text>
         </View>
       ) : (
         draftTournaments.map(tournament => {
@@ -337,11 +342,11 @@ export default function ManageTournamentsScreen() {
           return (
             <TournamentListItem
               key={tournament.id}
-              title={tournament.created_by === user?.id ? 'Your Tournament' : tournament.name}
-              statusLabel="Draft"
+              title={tournament.created_by === user?.id ? copy.manage.yourTournament : tournament.name}
+              statusLabel={copy.manage.draftStatus}
               statusColor="#f59e0b"
               durationLabel={calendarDays.toString()}
-              secondaryText={`Join Code: ${tournament.join_code}`}
+              secondaryText={`${copy.manage.joinCodeSecondaryPrefix}${tournament.join_code}`}
               onPress={() =>
                 router.push({
                   pathname: '/draft-tournament/[id]',
@@ -366,15 +371,15 @@ export default function ManageTournamentsScreen() {
         style={styles.backButton}
         onPress={() => setActiveView('menu')}
       >
-        <Text style={styles.backButtonText}>← Back to Menu</Text>
+        <Text style={styles.backButtonText}>{copy.manage.backToMenu}</Text>
       </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
       ) : pastTournaments.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No past tournaments</Text>
-          <Text style={styles.emptySubtext}>Tournaments you participated in will appear here once they end or if you forfeit</Text>
+          <Text style={styles.emptyText}>{copy.manage.emptyPastTitle}</Text>
+          <Text style={styles.emptySubtext}>{copy.manage.emptyPastSubtext}</Text>
         </View>
       ) : (
         pastTournaments.map(({ tournament, iForfeited }) => {
@@ -387,9 +392,9 @@ export default function ManageTournamentsScreen() {
           return (
             <TournamentListItem
               key={tournament.id}
-              title={tournament.created_by === user?.id ? "Your Tournament" : tournament.name}
+              title={tournament.created_by === user?.id ? copy.manage.yourTournament : tournament.name}
               showWinnerTrophy={wonTournamentIds.has(tournament.id)}
-              statusLabel={showForfeitedLabel ? 'Forfeited' : 'Closed'}
+              statusLabel={showForfeitedLabel ? copy.manage.forfeitedStatus : copy.manage.closedStatus}
               statusColor={showForfeitedLabel ? '#ef4444' : '#6b7280'}
               durationLabel={calendarDays.toString()}
               endDateLabel={formatDateShort(tournament.end_date)}
@@ -409,7 +414,7 @@ export default function ManageTournamentsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tournament Management</Text>
+        <Text style={styles.title}>{copy.manage.headerTitle}</Text>
       </View>
 
       {activeView === 'menu' && renderMenu()}
@@ -424,16 +429,18 @@ export default function ManageTournamentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Tournament</Text>
+            <Text style={styles.modalTitle}>{copy.manage.modalCreateTitle}</Text>
 
             <View style={styles.infoBox}>
-              <Text style={styles.infoBoxLabel}>Tournament Name</Text>
+              <Text style={styles.infoBoxLabel}>{copy.manage.tournamentNameLabel}</Text>
               <Text style={styles.infoBoxValue}>
-                {userDisplayName ? `${userDisplayName}'s tournament` : 'Loading...'}
+                {userDisplayName
+                  ? fillCopyTemplate(copy.manage.defaultTournamentNameTemplate, { name: userDisplayName })
+                  : copy.manage.loadingTournamentName}
               </Text>
             </View>
 
-            <Text style={styles.inputLabel}>Duration</Text>
+            <Text style={styles.inputLabel}>{copy.manage.durationLabel}</Text>
             <TouchableOpacity
               style={styles.dropdownButton}
               onPress={() => setShowDurationPicker(!showDurationPicker)}
@@ -445,7 +452,7 @@ export default function ManageTournamentsScreen() {
 
             {showDurationPicker && (
               <View style={styles.dropdownList}>
-                {DURATION_OPTIONS.map((option) => (
+                {getDurationOptions().map((option) => (
                   <TouchableOpacity
                     key={option.days}
                     style={[
@@ -471,10 +478,8 @@ export default function ManageTournamentsScreen() {
             )}
 
             <View style={styles.infoBox}>
-              <Text style={styles.infoBoxLabel}>Start Date</Text>
-              <Text style={styles.infoBoxValue}>
-                When tournament is started
-              </Text>
+              <Text style={styles.infoBoxLabel}>{copy.manage.startDateLabel}</Text>
+              <Text style={styles.infoBoxValue}>{copy.manage.startDateValue}</Text>
             </View>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -484,13 +489,13 @@ export default function ManageTournamentsScreen() {
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => {
                   setCreateModalVisible(false);
-                  setDuration(DURATION_OPTIONS[0]);
+                  setDuration(getDurationOptions()[0]);
                   setShowDurationPicker(false);
                   setError('');
                 }}
                 disabled={saving}
               >
-                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                <Text style={styles.modalButtonTextCancel}>{copy.manage.cancel}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -501,7 +506,7 @@ export default function ManageTournamentsScreen() {
                 {saving ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.modalButtonTextSave}>Create</Text>
+                  <Text style={styles.modalButtonTextSave}>{copy.manage.create}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -517,17 +522,16 @@ export default function ManageTournamentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Tournament limit reached</Text>
+            <Text style={styles.modalTitle}>{copy.manage.limitModalTitle}</Text>
             <Text style={styles.limitMessage}>
-              You have hit your limit of {limitQuantity} continuous tournaments. Delete a draft tournament
-              you've created, leave a tournament, or wait for an ongoing tournament to complete.
+              {fillCopyTemplate(copy.manage.limitModalBody, { max: limitQuantity })}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => setLimitModalVisible(false)}
               >
-                <Text style={styles.modalButtonTextCancel}>OK</Text>
+                <Text style={styles.modalButtonTextCancel}>{copy.manage.ok}</Text>
               </TouchableOpacity>
             </View>
           </View>

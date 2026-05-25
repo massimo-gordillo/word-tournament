@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Users, Copy, Play, Trash2 } from 'lucide-react-native';
 import { useAppConfig } from '@/contexts/ConfigContext';
+import { copy, fillCopyTemplate } from '@/app/copy/strings';
 import { calendarDaysInclusiveCount } from '@/lib/dateUtils';
 
 /** Cross-platform confirm: Alert.alert on native, window.confirm on web (Alert.alert doesn't work on web). */
@@ -24,9 +25,9 @@ function confirmDiscard(
     return;
   }
   Alert.alert(title, message, [
-    { text: 'Keep draft', style: 'cancel', onPress: onCancel },
+    { text: copy.draftTournament.discardKeep, style: 'cancel', onPress: onCancel },
     {
-      text: 'Discard',
+      text: copy.draftTournament.discardDestructive,
       style: 'destructive',
       onPress: () => void Promise.resolve(onConfirm()),
     },
@@ -36,11 +37,11 @@ function confirmDiscard(
 /** Calendar days from `start_date` / `end_date` (same inclusive rule as tournament creation). */
 function formatTournamentLengthLabel(startDateStr: string, endDateStr: string): string {
   const days = calendarDaysInclusiveCount(startDateStr, endDateStr);
-  if (days === 3) return '3 days';
-  if (days === 7) return '7 days';
-  if (days === 14) return '2 weeks';
-  if (days === 28) return '4 weeks';
-  return `${days} days`;
+  if (days === 3) return copy.draftTournament.duration3;
+  if (days === 7) return copy.draftTournament.duration7;
+  if (days === 14) return copy.draftTournament.duration14;
+  if (days === 28) return copy.draftTournament.duration28;
+  return fillCopyTemplate(copy.draftTournament.durationDaysTemplate, { days });
 }
 
 interface Tournament {
@@ -98,7 +99,7 @@ export default function DraftTournamentScreen() {
     const formattedParticipants = participantData.map(p => ({
       id: p.id,
       user_id: p.user_id,
-      display_name: usersMap.get(p.user_id) || 'Unknown',
+      display_name: usersMap.get(p.user_id) || copy.tournamentDetail.unknownPlayer,
     }));
 
     setParticipants(formattedParticipants);
@@ -176,7 +177,7 @@ export default function DraftTournamentScreen() {
 
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
       const ok = window.confirm(
-        `Remove ${participant.display_name} from this tournament?\n\nThey will not be able to re-join.`,
+        fillCopyTemplate(copy.draftTournament.removeWebTemplate, { name: participant.display_name }),
       );
       if (ok) {
         void confirmAndKick();
@@ -184,10 +185,10 @@ export default function DraftTournamentScreen() {
       return;
     }
 
-    Alert.alert('Remove player', 'Remove this player from the tournament? They will not be able to re-join.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(copy.draftTournament.removeAlertTitle, copy.draftTournament.removeAlertBody, [
+      { text: copy.draftTournament.removeAlertCancel, style: 'cancel' },
       {
-        text: 'Remove',
+        text: copy.draftTournament.removeAlertRemove,
         style: 'destructive',
         onPress: () => void confirmAndKick(),
       },
@@ -219,22 +220,34 @@ export default function DraftTournamentScreen() {
     if (error) {
       const message = error.message || '';
       if (message.includes('NOT_ENOUGH_PLAYERS')) {
-        Alert.alert('Not enough players', 'At least 2 players must still be in the tournament to start it.');
+        Alert.alert(
+          copy.draftTournament.notEnoughPlayersTitle,
+          copy.draftTournament.notEnoughPlayersBody,
+        );
         await loadTournamentData();
         return;
       }
       if (message.includes('TOURNAMENT_NOT_DRAFT')) {
-        Alert.alert('Unable to start', 'This tournament is no longer in draft status.');
+        Alert.alert(
+          copy.draftTournament.unableStartNotDraftTitle,
+          copy.draftTournament.unableStartNotDraftBody,
+        );
         await loadTournamentData();
         return;
       }
       if (message.includes('ONLY_CREATOR_CAN_START')) {
-        Alert.alert('Permission denied', 'Only the tournament creator can start this tournament.');
+        Alert.alert(
+          copy.draftTournament.permissionDeniedTitle,
+          copy.draftTournament.permissionDeniedBody,
+        );
         await loadTournamentData();
         return;
       }
 
-      Alert.alert('Unable to start tournament', 'Please refresh and try again.');
+      Alert.alert(
+        copy.draftTournament.unableStartGenericTitle,
+        copy.draftTournament.unableStartGenericBody,
+      );
       await loadTournamentData();
       return;
     }
@@ -248,8 +261,8 @@ export default function DraftTournamentScreen() {
   const handleDiscardTournament = () => {
     setDiscardError(null);
     confirmDiscard(
-      'Discard tournament',
-      'This will cancel the tournament and remove it from your drafts. This cannot be undone.',
+      copy.draftTournament.discardTitle,
+      copy.draftTournament.discardBody,
       async () => {
         if (!tournament || !user?.id) return;
         setDiscarding(true);
@@ -259,7 +272,7 @@ export default function DraftTournamentScreen() {
         });
         setDiscarding(false);
         if (error) {
-          setDiscardError(error.message || 'Failed to discard tournament');
+          setDiscardError(error.message || copy.draftTournament.discardFailed);
           return;
         }
 
@@ -279,7 +292,10 @@ export default function DraftTournamentScreen() {
       setLeaving(false);
 
       if (error) {
-        Alert.alert('Unable to leave', error.message || 'Could not leave this tournament.');
+        Alert.alert(
+          copy.draftTournament.unableLeaveTitle,
+          error.message || copy.draftTournament.unableLeaveGeneric,
+        );
         return;
       }
 
@@ -287,17 +303,17 @@ export default function DraftTournamentScreen() {
     };
 
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
-      const ok = window.confirm('Leave this draft tournament?');
+      const ok = window.confirm(copy.draftTournament.leaveWebConfirm);
       if (ok) {
         void confirmAndLeave();
       }
       return;
     }
 
-    Alert.alert('Leave tournament', 'Are you sure you want to leave this draft tournament?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(copy.draftTournament.leaveTitle, copy.draftTournament.leaveBody, [
+      { text: copy.draftTournament.removeAlertCancel, style: 'cancel' },
       {
-        text: 'Leave',
+        text: copy.draftTournament.leaveButton,
         style: 'destructive',
         onPress: () => void confirmAndLeave(),
       },
@@ -315,7 +331,7 @@ export default function DraftTournamentScreen() {
   if (!tournament) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Tournament not found</Text>
+        <Text>{copy.draftTournament.notFound}</Text>
       </View>
     );
   }
@@ -379,13 +395,11 @@ export default function DraftTournamentScreen() {
           }
         >
           <View style={styles.waitingCard}>
-            <Text style={styles.waitingTitle}>Waiting</Text>
-            <Text style={styles.waitingMessage}>
-              You're in this tournament. The host will start it when everyone is ready.
-            </Text>
+            <Text style={styles.waitingTitle}>{copy.draftTournament.waitingTitle}</Text>
+            <Text style={styles.waitingMessage}>{copy.draftTournament.waitingMessageNonCreator}</Text>
           </View>
           <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>Tournament length</Text>
+            <Text style={styles.infoLabel}>{copy.draftTournament.tournamentLengthLabel}</Text>
             <Text style={styles.infoValue}>
               {formatTournamentLengthLabel(tournament.start_date, tournament.end_date)}
             </Text>
@@ -395,12 +409,15 @@ export default function DraftTournamentScreen() {
             <View style={styles.participantsHeader}>
               <Users size={24} color="#1a1a1a" />
               <Text style={styles.participantsTitle}>
-                Players ({participants.length}/{config?.maxParticipantsPerTournament ?? 15})
+                {fillCopyTemplate(copy.draftTournament.playersTitleTemplate, {
+                  current: participants.length,
+                  max: config?.maxParticipantsPerTournament ?? 15,
+                })}
               </Text>
             </View>
             {participants.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No players yet</Text>
+                <Text style={styles.emptyText}>{copy.draftTournament.noPlayersYet}</Text>
               </View>
             ) : (
               participants.map(participant => (
@@ -423,7 +440,7 @@ export default function DraftTournamentScreen() {
             {leaving ? (
               <ActivityIndicator color="#ef4444" />
             ) : (
-              <Text style={styles.leaveButtonText}>Leave Tournament</Text>
+              <Text style={styles.leaveButtonText}>{copy.draftTournament.leaveTournament}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -455,7 +472,7 @@ export default function DraftTournamentScreen() {
         }
       >
         <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Tournament length</Text>
+          <Text style={styles.infoLabel}>{copy.draftTournament.tournamentLengthLabel}</Text>
           <Text style={styles.infoValue}>
             {formatTournamentLengthLabel(tournament.start_date, tournament.end_date)}
           </Text>
@@ -467,14 +484,17 @@ export default function DraftTournamentScreen() {
           <View style={styles.participantsHeader}>
             <Users size={24} color="#1a1a1a" />
             <Text style={styles.participantsTitle}>
-              Players ({participants.length}/{config?.maxParticipantsPerTournament ?? 15})
+              {fillCopyTemplate(copy.draftTournament.playersTitleTemplate, {
+                current: participants.length,
+                max: config?.maxParticipantsPerTournament ?? 15,
+              })}
             </Text>
           </View>
 
           {participants.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No players yet</Text>
-              <Text style={styles.emptySubtext}>Waiting for players to join...</Text>
+              <Text style={styles.emptyText}>{copy.draftTournament.noPlayersYet}</Text>
+              <Text style={styles.emptySubtext}>{copy.draftTournament.waitingPlayersSubtext}</Text>
             </View>
           ) : (
             participants.map(participant => (
@@ -500,9 +520,7 @@ export default function DraftTournamentScreen() {
 
         {!canStart && participants.length > 0 && (
           <View style={styles.warningCard}>
-            <Text style={styles.warningText}>
-              You need at least 2 players to start the tournament
-            </Text>
+            <Text style={styles.warningText}>{copy.draftTournament.needTwoPlayers}</Text>
           </View>
         )}
 
@@ -523,7 +541,7 @@ export default function DraftTournamentScreen() {
           ) : (
             <>
               <Play size={20} color="#fff" />
-              <Text style={styles.startButtonText}>Start tournament</Text>
+              <Text style={styles.startButtonText}>{copy.draftTournament.startButton}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -537,7 +555,7 @@ export default function DraftTournamentScreen() {
           ) : (
             <>
               <Trash2 size={20} color="#ef4444" />
-              <Text style={styles.discardButtonText}>Discard tournament</Text>
+              <Text style={styles.discardButtonText}>{copy.draftTournament.discardButton}</Text>
             </>
           )}
         </TouchableOpacity>

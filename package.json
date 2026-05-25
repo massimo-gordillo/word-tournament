@@ -10,6 +10,8 @@
     "check:draft-route-effect": "node scripts/assert-draft-tournament-route-effect.mjs",
     "typecheck": "tsc --noEmit",
     "supabase:play-review-seed": "node scripts/generate-play-review-seed.mjs",
+    "copy:export:csv": "node scripts/export-copy-csv.mjs",
+    "copy:import:csv": "node scripts/import-copy-csv.mjs",
     "supabase:status": "npx supabase status",
     "supabase:db:push": "npx supabase db push && npm run supabase:play-review-seed",
     "supabase:db:reset": "npx supabase db reset && npm run supabase:play-review-seed && npm run supabase:local-test-users-seed",

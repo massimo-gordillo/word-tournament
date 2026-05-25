@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Target, TrendingUp } from 'lucide-react-native';
 import { useAppConfig } from '@/contexts/ConfigContext';
-import { formatDateLong } from '@/lib/dateUtils';  
+import { formatDateLong } from '@/lib/dateUtils';
+import { copy } from '@/app/copy/strings';
 
 interface Stats {
   averageScore: number;
@@ -103,7 +104,7 @@ export default function StatisticsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Statistics</Text>
+        <Text style={styles.title}>{copy.stats.title}</Text>
       </View>
 
       <ScrollView
@@ -118,8 +119,8 @@ export default function StatisticsScreen() {
               <Target size={24} color="#10b981" />
             </View>
             <Text style={styles.statValue}>{stats?.averageScore.toFixed(1)}</Text>
-            <Text style={styles.statLabel}>Average Score</Text>
-            <Text style={styles.statSubtext}>Excluding penalties</Text>
+            <Text style={styles.statLabel}>{copy.stats.averageScore}</Text>
+            <Text style={styles.statSubtext}>{copy.stats.averageSubtext}</Text>
           </View>
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
@@ -127,8 +128,8 @@ export default function StatisticsScreen() {
               <TrendingUp size={24} color="#3b82f6" />
             </View>
             <Text style={styles.statValue}>{stats?.totalSubmissions}</Text>
-            <Text style={styles.statLabel}>Total Submissions</Text>
-            <Text style={styles.statSubtext}>Word Games completed</Text>
+            <Text style={styles.statLabel}>{copy.stats.totalSubmissions}</Text>
+            <Text style={styles.statSubtext}>{copy.stats.submissionsSubtext}</Text>
           </View>
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
@@ -136,8 +137,8 @@ export default function StatisticsScreen() {
               <Trophy size={24} color="#f59e0b" />
             </View>
             <Text style={styles.statValue}>{stats?.tournamentWins}</Text>
-            <Text style={styles.statLabel}>Tournament Wins</Text>
-            <Text style={styles.statSubtext}>1st place finishes</Text>
+            <Text style={styles.statLabel}>{copy.stats.tournamentWins}</Text>
+            <Text style={styles.statSubtext}>{copy.stats.winsSubtext}</Text>
           </View>
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
@@ -145,54 +146,71 @@ export default function StatisticsScreen() {
               <Trophy size={24} color="#8b5cf6" />
             </View>
             <Text style={styles.statValue}>{stats?.tournamentsParticipated}</Text>
-            <Text style={styles.statLabel}>Tournaments</Text>
-            <Text style={styles.statSubtext}>Total participation</Text>
+            <Text style={styles.statLabel}>{copy.stats.tournamentsLabel}</Text>
+            <Text style={styles.statSubtext}>{copy.stats.participationSubtext}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Best Score</Text>
+        <Text style={styles.sectionTitle}>{copy.stats.bestScoreSection}</Text>
           <View style={styles.detailCard}>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.detailValue}>{stats?.bestScoreDate ? formatDateLong(stats.bestScoreDate) : 'N/A'}
+              <Text style={styles.detailValue}>
+                {stats?.bestScoreDate ? formatDateLong(stats.bestScoreDate) : copy.stats.na}
               </Text>
-              <Text style={styles.detailValue}>{stats?.bestScore ? ' ' + stats.bestScore + ' points' : 'N/A'}</Text>
+              <Text style={styles.detailValue}>
+                {stats?.bestScore
+                  ? ` ${stats.bestScore} ${copy.stats.pointsSuffix}`
+                  : copy.stats.na}
+              </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Scoring Guide</Text>
+          <Text style={styles.sectionTitle}>{copy.stats.scoringGuide}</Text>
 
           <View style={styles.detailCard}>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>1 Guess</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess1 ?? 20} points</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess1}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess1 ?? 20} {copy.stats.pointsSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>2 Guesses</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess2 ?? 8} points</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess2}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess2 ?? 8} {copy.stats.pointsSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>3 Guesses</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess3 ?? 6} points</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess3}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess3 ?? 6} {copy.stats.pointsSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>4 Guesses</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess4 ?? 4} points</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess4}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess4 ?? 4} {copy.stats.pointsSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>5 Guesses</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess5 ?? 2} points</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess5}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess5 ?? 2} {copy.stats.pointsSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>6 Guesses</Text>
-              <Text style={styles.guideValue}>{config?.pointsGuess6 ?? 1} point</Text>
+              <Text style={styles.guideLabel}>{copy.stats.guess6}</Text>
+              <Text style={styles.guideValue}>
+                {config?.pointsGuess6 ?? 1} {copy.stats.guess6PointSuffix}
+              </Text>
             </View>
             <View style={styles.scoreGuideRow}>
-              <Text style={styles.guideLabel}>Missed/Failed</Text>
+              <Text style={styles.guideLabel}>{copy.stats.missedFailed}</Text>
               <Text style={[styles.guideValue, { color: '#ef4444' }]}>
-                {config?.pointsMissed ?? -2} points
+                {config?.pointsMissed ?? -2} {copy.stats.pointsSuffix}
               </Text>
             </View>
           </View>
