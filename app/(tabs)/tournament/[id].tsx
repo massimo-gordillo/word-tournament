@@ -449,7 +449,7 @@ export default function TournamentDetailScreen() {
   if (!tournament) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>{loadError || {copy.tournamentDetail.notFound}}</Text>
+        <Text>{loadError || copy.tournamentDetail.notFound}</Text>
         <TouchableOpacity style={styles.retryLoadButton} onPress={() => void loadTournamentData()}>
           <Text style={styles.retryLoadButtonText}>Try Again</Text>
         </TouchableOpacity>

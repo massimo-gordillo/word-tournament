@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ChevronRight, FileText, LogOut, Save, Scale } from 'lucide-react-native';
 import { AppColors } from '@/constants/colors';
-import { LogOut, Save } from 'lucide-react-native';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 export default function AccountScreen() {
