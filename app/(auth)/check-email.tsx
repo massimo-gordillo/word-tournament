@@ -103,7 +103,7 @@ export default function CheckEmailScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace('/(auth)')} disabled={loading}>
-          <Text style={styles.linkText}>
+          <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
             {copy.auth.checkEmail.backPrefix}{' '}
             <Text style={styles.linkTextBold}>{copy.auth.checkEmail.signInBold}</Text>
           </Text>
@@ -164,6 +164,9 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     marginTop: 24,
+  },
+  linkTextDisabled: {
+    opacity: 0.5,
   },
   linkTextBold: {
     color: '#10b981',

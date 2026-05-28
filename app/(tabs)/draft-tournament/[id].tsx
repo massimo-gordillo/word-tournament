@@ -72,6 +72,9 @@ export default function DraftTournamentScreen() {
   const [discardError, setDiscardError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [kickingUserId, setKickingUserId] = useState<string | null>(null);
+
+  const actionBusy = starting || discarding || leaving || kickingUserId !== null;
 
   const routeToTournamentDetail = useCallback(
     (tournamentId: string, creatorUserId: string) => {
@@ -185,15 +188,20 @@ export default function DraftTournamentScreen() {
   }, [id, loadParticipants, routeToTournamentDetail]);
 
   const handleKickParticipant = (participant: Participant) => {
-    if (!tournament || participant.user_id === user?.id) return;
+    if (!tournament || participant.user_id === user?.id || actionBusy) return;
 
     const confirmAndKick = async () => {
-      await supabase.rpc('kick_tournament_participant', {
-        p_tournament_id: tournament.id,
-        p_user_id: participant.user_id,
-      });
+      setKickingUserId(participant.user_id);
+      try {
+        await supabase.rpc('kick_tournament_participant', {
+          p_tournament_id: tournament.id,
+          p_user_id: participant.user_id,
+        });
 
-      await loadParticipants(tournament.id);
+        await loadParticipants(tournament.id);
+      } finally {
+        setKickingUserId(null);
+      }
     };
 
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
@@ -229,7 +237,7 @@ export default function DraftTournamentScreen() {
   };
 
   const handleStartTournament = async () => {
-    if (!tournament || participants.length < 2) return;
+    if (!tournament || participants.length < 2 || actionBusy) return;
 
     setStarting(true);
     const { error } = await supabase.rpc('start_draft_tournament', {
@@ -280,6 +288,8 @@ export default function DraftTournamentScreen() {
   };
 
   const handleDiscardTournament = () => {
+    if (actionBusy) return;
+
     setDiscardError(null);
     confirmDiscard(
       copy.draftTournament.discardTitle,
@@ -303,7 +313,7 @@ export default function DraftTournamentScreen() {
   };
 
   const handleLeaveTournament = () => {
-    if (!tournament || !user?.id) return;
+    if (!tournament || !user?.id || actionBusy) return;
 
     const confirmAndLeave = async () => {
       setLeaving(true);
@@ -364,7 +374,11 @@ export default function DraftTournamentScreen() {
     <View style={styles.joinCodeRow}>
       <Text style={styles.joinCodeLabel}>Join code </Text>
       <Text style={styles.joinCodeValue}>{tournament.join_code}</Text>
-      <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
+      <TouchableOpacity
+        onPress={handleCopyCode}
+        style={[styles.copyButton, actionBusy && styles.controlDisabled]}
+        disabled={actionBusy}
+      >
         <Copy size={18} color="#10b981" />
         <Text style={styles.copyButtonText}>Copy</Text>
       </TouchableOpacity>
@@ -396,7 +410,11 @@ export default function DraftTournamentScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={[styles.backButton, actionBusy && styles.controlDisabled]}
+            disabled={actionBusy}
+          >
             <ChevronLeft size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>{tournament.name}</Text>
@@ -454,9 +472,9 @@ export default function DraftTournamentScreen() {
             )}
           </View>
           <TouchableOpacity
-            style={[styles.leaveButton, leaving && styles.leaveButtonDisabled]}
+            style={[styles.leaveButton, actionBusy && styles.leaveButtonDisabled]}
             onPress={handleLeaveTournament}
-            disabled={leaving}
+            disabled={actionBusy}
           >
             {leaving ? (
               <ActivityIndicator color="#ef4444" />
@@ -472,7 +490,11 @@ export default function DraftTournamentScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={handleBack}
+          style={[styles.backButton, actionBusy && styles.controlDisabled]}
+          disabled={actionBusy}
+        >
           <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{tournament.name}</Text>
@@ -529,9 +551,17 @@ export default function DraftTournamentScreen() {
                 {tournament.status === 'draft' && participant.user_id !== user?.id && (
                   <TouchableOpacity
                     onPress={() => handleKickParticipant(participant)}
-                    style={styles.kickButton}
+                    style={[
+                      styles.kickButton,
+                      (actionBusy || kickingUserId === participant.user_id) && styles.controlDisabled,
+                    ]}
+                    disabled={actionBusy}
                   >
-                    <Text style={styles.kickButtonText}>×</Text>
+                    {kickingUserId === participant.user_id ? (
+                      <ActivityIndicator size="small" color="#ef4444" />
+                    ) : (
+                      <Text style={styles.kickButtonText}>×</Text>
+                    )}
                   </TouchableOpacity>
                 )}
               </View>
@@ -553,9 +583,12 @@ export default function DraftTournamentScreen() {
           <Text style={styles.errorText}>{discardError}</Text>
         ) : null}
         <TouchableOpacity
-          style={[styles.startButton, !canStart && styles.startButtonDisabled]}
+          style={[
+            styles.startButton,
+            (!canStart || actionBusy) && styles.startButtonDisabled,
+          ]}
           onPress={handleStartTournament}
-          disabled={!canStart || starting}
+          disabled={!canStart || actionBusy}
         >
           {starting ? (
             <ActivityIndicator color="#fff" />
@@ -567,9 +600,9 @@ export default function DraftTournamentScreen() {
           )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.discardButton}
+          style={[styles.discardButton, actionBusy && styles.controlDisabled]}
           onPress={handleDiscardTournament}
-          disabled={discarding}
+          disabled={actionBusy}
         >
           {discarding ? (
             <ActivityIndicator color="#ef4444" />
@@ -848,6 +881,9 @@ const styles = StyleSheet.create({
   },
   leaveButtonDisabled: {
     opacity: 0.7,
+  },
+  controlDisabled: {
+    opacity: 0.5,
   },
   leaveButtonText: {
     color: '#ef4444',

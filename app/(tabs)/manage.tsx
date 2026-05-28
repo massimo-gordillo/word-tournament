@@ -59,6 +59,9 @@ export default function ManageTournamentsScreen() {
   const [limitModalVisible, setLimitModalVisible] = useState(false);
   const [limitQuantity, setLimitQuantity] = useState(4);
   const [wonTournamentIds, setWonTournamentIds] = useState<Set<string>>(new Set());
+  const [menuPending, setMenuPending] = useState<'create' | 'drafts' | 'past' | null>(null);
+
+  const menuInteractionBlocked = saving || menuPending !== null;
 
   useEffect(() => {
     loadUserDisplayName();
@@ -264,49 +267,98 @@ export default function ManageTournamentsScreen() {
     });
   };
 
+  const handleMenuCreate = async () => {
+    if (menuInteractionBlocked) return;
+
+    setMenuPending('create');
+    try {
+      await checkTournamentLimitAndMaybe(() => setCreateModalVisible(true));
+    } finally {
+      setMenuPending(null);
+    }
+  };
+
+  const handleMenuDrafts = async () => {
+    if (menuInteractionBlocked) return;
+
+    setMenuPending('drafts');
+    try {
+      await loadDraftTournaments();
+      setActiveView('drafts');
+    } finally {
+      setMenuPending(null);
+    }
+  };
+
+  const handleMenuPast = async () => {
+    if (menuInteractionBlocked) return;
+
+    setMenuPending('past');
+    try {
+      await loadPastTournaments();
+      setActiveView('past');
+    } finally {
+      setMenuPending(null);
+    }
+  };
+
+  const renderMenuCard = (
+    action: 'create' | 'drafts' | 'past',
+    onPress: () => void,
+    iconBackgroundColor: string,
+    Icon: typeof Plus,
+    title: string,
+    subtitle: string,
+  ) => {
+    const isPending = menuPending === action;
+
+    return (
+      <TouchableOpacity
+        key={action}
+        style={[styles.menuCard, menuInteractionBlocked && styles.menuCardDisabled]}
+        onPress={onPress}
+        disabled={menuInteractionBlocked}
+      >
+        <View style={[styles.menuIconContainer, { backgroundColor: iconBackgroundColor }]}>
+          {isPending ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <Icon size={32} color="#fff" />
+          )}
+        </View>
+        <Text style={styles.menuCardTitle}>{title}</Text>
+        <Text style={styles.menuCardSubtitle}>{subtitle}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderMenu = () => (
     <ScrollView style={styles.content}>
       <View style={styles.menuGrid}>
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => {
-            void checkTournamentLimitAndMaybe(() => setCreateModalVisible(true));
-          }}
-        >
-          <View style={[styles.menuIconContainer, { backgroundColor: '#10b981' }]}>
-            <Plus size={32} color="#fff" />
-          </View>
-          <Text style={styles.menuCardTitle}>{copy.manage.createTitle}</Text>
-          <Text style={styles.menuCardSubtitle}>{copy.manage.createSubtitle}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => {
-            setActiveView('drafts');
-            loadDraftTournaments();
-          }}
-        >
-          <View style={[styles.menuIconContainer, { backgroundColor: '#f59e0b' }]}>
-            <FileText size={32} color="#fff" />
-          </View>
-          <Text style={styles.menuCardTitle}>{copy.manage.draftsTitle}</Text>
-          <Text style={styles.menuCardSubtitle}>{copy.manage.draftsSubtitle}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuCard}
-          onPress={() => {
-            setActiveView('past');
-            loadPastTournaments();
-          }}
-        >
-          <View style={[styles.menuIconContainer, { backgroundColor: '#6b7280' }]}>
-            <History size={32} color="#fff" />
-          </View>
-          <Text style={styles.menuCardTitle}>{copy.manage.pastTitle}</Text>
-          <Text style={styles.menuCardSubtitle}>{copy.manage.pastSubtitle}</Text>
-        </TouchableOpacity>
+        {renderMenuCard(
+          'create',
+          () => void handleMenuCreate(),
+          '#10b981',
+          Plus,
+          copy.manage.createTitle,
+          copy.manage.createSubtitle,
+        )}
+        {renderMenuCard(
+          'drafts',
+          () => void handleMenuDrafts(),
+          '#f59e0b',
+          FileText,
+          copy.manage.draftsTitle,
+          copy.manage.draftsSubtitle,
+        )}
+        {renderMenuCard(
+          'past',
+          () => void handleMenuPast(),
+          '#6b7280',
+          History,
+          copy.manage.pastTitle,
+          copy.manage.pastSubtitle,
+        )}
       </View>
     </ScrollView>
   );
@@ -425,7 +477,11 @@ export default function ManageTournamentsScreen() {
         visible={createModalVisible}
         transparent
         animationType="slide"
-        onRequestClose={() => setCreateModalVisible(false)}
+        onRequestClose={() => {
+          if (!saving) {
+            setCreateModalVisible(false);
+          }
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -575,6 +631,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  menuCardDisabled: {
+    opacity: 0.5,
   },
   menuIconContainer: {
     width: 72,

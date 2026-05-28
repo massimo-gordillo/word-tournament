@@ -1,4 +1,13 @@
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { AppColors } from '@/constants/colors';
@@ -7,9 +16,17 @@ const PRIVACY_POLICY_URL = 'https://massimo-gordillo.github.io/word-tournament/p
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
+  const [opening, setOpening] = useState(false);
 
   const handleOpenPolicy = async () => {
-    await Linking.openURL(PRIVACY_POLICY_URL);
+    if (opening) return;
+
+    setOpening(true);
+    try {
+      await Linking.openURL(PRIVACY_POLICY_URL);
+    } finally {
+      setOpening(false);
+    }
   };
 
   return (
@@ -18,6 +35,7 @@ export default function PrivacyPolicyScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.replace('/(tabs)/account')}
+          disabled={opening}
         >
           <ChevronLeft size={18} color={AppColors.text.inverse} />
           <Text style={styles.backButtonText}>Back</Text>
@@ -35,8 +53,16 @@ export default function PrivacyPolicyScreen() {
           </Text>
           <Text style={styles.urlLabel}>{PRIVACY_POLICY_URL}</Text>
 
-          <TouchableOpacity style={styles.button} onPress={handleOpenPolicy}>
-            <Text style={styles.buttonText}>Open Privacy Policy</Text>
+          <TouchableOpacity
+            style={[styles.button, opening && styles.buttonDisabled]}
+            onPress={handleOpenPolicy}
+            disabled={opening}
+          >
+            {opening ? (
+              <ActivityIndicator color={AppColors.text.inverse} />
+            ) : (
+              <Text style={styles.buttonText}>Open Privacy Policy</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -102,6 +128,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: AppColors.text.inverse,

@@ -523,6 +523,8 @@ export default function TournamentDetailScreen() {
   };
 
   const handleForfeitPress = () => {
+    if (forfeitLoading) return;
+
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(copy.tournamentDetail.forfeitAlertBody);
       if (confirmed) {
@@ -900,15 +902,15 @@ export default function TournamentDetailScreen() {
           participants.some(p => p.user_id === user?.id && !p.forfeited) && (
             <View style={styles.section}>
               <TouchableOpacity
-                style={[styles.forfeitButton, forfeitLoading && { opacity: 0.7 }]}
+                style={[styles.forfeitButton, forfeitLoading && styles.forfeitButtonDisabled]}
                 onPress={handleForfeitPress}
                 disabled={forfeitLoading}
               >
-                <Text style={styles.forfeitButtonText}>
-                  {forfeitLoading
-                    ? copy.tournamentDetail.forfeiting
-                    : copy.tournamentDetail.forfeitButton}
-                </Text>
+                {forfeitLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.forfeitButtonText}>{copy.tournamentDetail.forfeitButton}</Text>
+                )}
               </TouchableOpacity>
             </View>
           )}
@@ -1198,6 +1200,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
+  },
+  forfeitButtonDisabled: {
+    opacity: 0.7,
   },
   forfeitButtonText: {
     color: '#fff',

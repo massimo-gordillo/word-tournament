@@ -37,6 +37,12 @@ const copyEntries = {
   'auth.forgotPassword.sendButton': 'Send reset link',
   'auth.forgotPassword.subtitle': 'We\'ll email you a link to reset it.',
   'auth.forgotPassword.title': 'Forgot password',
+  'auth.login.appleSignInFailedTitle': 'Sign in unsuccessful',
+  'auth.login.appleSignInGenericError': 'We couldn\'t sign you in with Apple. Please try again in a moment.',
+  'auth.login.appleSignInNoSession': 'Sign-in completed, but we couldn\'t start your session. Please try again.',
+  'auth.login.appleSignInNoToken': 'Apple didn\'t return the information we need. Please try again.',
+  'auth.login.appleSigningInMessage': 'Please wait while we connect to Apple and set up your account.',
+  'auth.login.appleSigningInTitle': 'Signing in with Apple',
   'auth.login.emailPlaceholder': 'Email',
   'auth.login.fillAllFieldsError': 'Please fill in all fields',
   'auth.login.forgotPassword': 'Forgot password?',
@@ -340,6 +346,12 @@ export interface CopySchema {
       noAccountPrefix: string;
       signUpCta: string;
       fillAllFieldsError: string;
+      appleSigningInTitle: string;
+      appleSigningInMessage: string;
+      appleSignInFailedTitle: string;
+      appleSignInGenericError: string;
+      appleSignInNoToken: string;
+      appleSignInNoSession: string;
     };
     signup: Record<string, string>;
     forgotPassword: Record<string, string>;

@@ -325,6 +325,8 @@ export default function DailySubmissionScreen() {
   };
 
   const handleSubmit = async () => {
+    if (loading) return;
+
     if (!submissionText.trim()) {
       setError(copy.dailySubmission.emptySubmissionError);
       return;
@@ -368,9 +370,8 @@ export default function DailySubmissionScreen() {
       .select()
       .single();
 
-    setLoading(false);
-
     if (dbError) {
+      setLoading(false);
       const message = dbError.message || copy.dailySubmission.dbSaveFallbackError;
       devLog('handleSubmit: backend error', { message, dbError });
       if (message.toLowerCase().includes('invalid word grid')) {
@@ -378,16 +379,18 @@ export default function DailySubmissionScreen() {
       } else {
         setError(message);
       }
-    } else {
-      devLog('handleSubmit: submission saved', { data });
-      await insertResultChatForTournaments(user!.id, today, data.id);
-      setTodaySubmission({
-        submission_text: data.submission_text,
-        wordle_score: data.wordle_score,
-        submitted_at: data.submitted_at,
-      });
-      setSubmissionText('');
+      return;
     }
+
+    devLog('handleSubmit: submission saved', { data });
+    await insertResultChatForTournaments(user!.id, today, data.id);
+    setTodaySubmission({
+      submission_text: data.submission_text,
+      wordle_score: data.wordle_score,
+      submitted_at: data.submitted_at,
+    });
+    setSubmissionText('');
+    setLoading(false);
   };
 
   const introModal = (
@@ -500,11 +503,12 @@ export default function DailySubmissionScreen() {
             <View style={styles.loadErrorCard}>
               <Text style={styles.error}>{loadError}</Text>
               <TouchableOpacity
-                style={styles.retryButton}
+                style={[styles.retryButton, loading && styles.buttonDisabled]}
                 onPress={() => {
                   setInitialSubmissionLoadComplete(false);
                   void loadTodaySubmission();
                 }}
+                disabled={loading}
               >
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>

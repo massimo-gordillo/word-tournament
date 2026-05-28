@@ -83,7 +83,7 @@ export default function ForgotPasswordScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-            <Text style={styles.linkText}>
+            <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
               <Text style={styles.linkTextBold}>{copy.auth.forgotPassword.backToSignIn}</Text>
             </Text>
           </TouchableOpacity>
@@ -148,6 +148,9 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     marginTop: 8,
+  },
+  linkTextDisabled: {
+    opacity: 0.5,
   },
   linkTextBold: {
     color: '#10b981',

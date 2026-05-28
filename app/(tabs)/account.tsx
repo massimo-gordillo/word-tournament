@@ -21,6 +21,9 @@ export default function AccountScreen() {
   const [success, setSuccess] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const accountBusy = saving || deleting || signingOut;
 
   useEffect(() => {
     loadUserProfile();
@@ -45,6 +48,8 @@ export default function AccountScreen() {
   };
 
   const handleUpdateProfile = async () => {
+    if (accountBusy) return;
+
     if (!displayName.trim()) {
       setError(copy.account.emptyDisplayName);
       return;
@@ -83,7 +88,12 @@ export default function AccountScreen() {
   };
 
   const handleSignOut = async () => {
+    if (accountBusy) return;
+
+    setSigningOut(true);
+    setError('');
     await signOut();
+    setSigningOut(false);
   };
 
   const runDeleteAccount = async () => {
@@ -156,7 +166,7 @@ export default function AccountScreen() {
               onChangeText={setDisplayName}
               placeholder={copy.account.placeholder}
               placeholderTextColor={AppColors.text.subtle}
-              editable={!saving}
+              editable={!accountBusy}
               maxLength={MAX_DISPLAY_NAME_LENGTH}
             />
 
@@ -164,9 +174,9 @@ export default function AccountScreen() {
             {success ? <Text style={styles.success}>{success}</Text> : null}
 
             <TouchableOpacity
-              style={[styles.button, saving && styles.buttonDisabled]}
+              style={[styles.button, accountBusy && styles.buttonDisabled]}
               onPress={handleUpdateProfile}
-              disabled={saving}
+              disabled={accountBusy}
             >
               {saving ? (
                 <ActivityIndicator color={AppColors.text.inverse} />
@@ -184,18 +194,22 @@ export default function AccountScreen() {
           <Text style={styles.sectionTitle}>{copy.account.sectionActions}</Text>
 
           <TouchableOpacity
-            style={styles.signOutButton}
+            style={[styles.signOutButton, accountBusy && styles.buttonDisabled]}
             onPress={handleSignOut}
-            disabled={deleting}
+            disabled={accountBusy}
           >
-            <LogOut size={20} color={AppColors.status.error} />
+            {signingOut ? (
+              <ActivityIndicator color={AppColors.status.error} />
+            ) : (
+              <LogOut size={20} color={AppColors.status.error} />
+            )}
             <Text style={styles.signOutText}>{copy.account.signOut}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.signOutButton, styles.deleteAccountButton, deleting && styles.buttonDisabled]}
+            style={[styles.signOutButton, styles.deleteAccountButton, accountBusy && styles.buttonDisabled]}
             onPress={handleDeleteAccount}
-            disabled={deleting || saving}
+            disabled={accountBusy}
           >
             {deleting ? (
               <ActivityIndicator color={AppColors.status.error} />
@@ -224,8 +238,9 @@ export default function AccountScreen() {
 
           <View style={styles.linkCard}>
             <TouchableOpacity
-              style={styles.linkRow}
+              style={[styles.linkRow, accountBusy && styles.linkRowDisabled]}
               onPress={() => router.push('/(tabs)/open-source-licenses')}
+              disabled={accountBusy}
             >
               <View style={styles.linkRowLeft}>
                 <Scale size={18} color={AppColors.icon.default} />
@@ -235,8 +250,9 @@ export default function AccountScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.linkRow}
+              style={[styles.linkRow, accountBusy && styles.linkRowDisabled]}
               onPress={() => router.push('/(tabs)/privacy-policy')}
+              disabled={accountBusy}
             >
               <View style={styles.linkRowLeft}>
                 <FileText size={18} color={AppColors.icon.default} />
@@ -421,6 +437,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.border.subtle,
+  },
+  linkRowDisabled: {
+    opacity: 0.5,
   },
   linkRowLeft: {
     flexDirection: 'row',

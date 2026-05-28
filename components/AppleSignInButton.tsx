@@ -1,7 +1,9 @@
-import { Alert, Platform } from 'react-native'
+import { useRef } from 'react'
+import { Alert, Platform, View, StyleSheet } from 'react-native'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { router } from 'expo-router'
 import { supabase } from '@/lib/supabase'
+import { copy } from '@/app/copy/strings'
 import { devLog } from '@/utils/logger'
 
 const buildAppleDisplayName = (givenName: string, familyName?: string | null) => {
@@ -11,11 +13,58 @@ const buildAppleDisplayName = (givenName: string, familyName?: string | null) =>
   return `${trimmedGivenName}${lastInitial ? ` ${lastInitial}` : ''}`
 }
 
-export function AppleSignInButton() {
-  // Apple Sign In is iOS only
+const isAppleSignInCanceled = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  (error as { code?: string }).code === 'ERR_REQUEST_CANCELED'
+
+const getAppleSignInErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    if (error.message === 'No identity token returned from Apple') {
+      return copy.auth.login.appleSignInNoToken
+    }
+    if (error.message.includes('no Supabase session')) {
+      return copy.auth.login.appleSignInNoSession
+    }
+    if (error.message.trim().length > 0) {
+      return error.message
+    }
+  }
+
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = String((error as { message?: string }).message ?? '').trim()
+    if (message.length > 0) {
+      return message
+    }
+  }
+
+  return copy.auth.login.appleSignInGenericError
+}
+
+type AppleSignInButtonProps = {
+  disabled?: boolean
+  onSignInStart?: () => void
+  onSignInEnd?: () => void
+}
+
+export function AppleSignInButton({
+  disabled = false,
+  onSignInStart,
+  onSignInEnd,
+}: AppleSignInButtonProps) {
+  const signInInFlightRef = useRef(false)
+
   if (Platform.OS !== 'ios') return null
 
   const handleAppleSignIn = async () => {
+    if (disabled || signInInFlightRef.current) {
+      return
+    }
+
+    signInInFlightRef.current = true
+    onSignInStart?.()
+
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -41,8 +90,6 @@ export function AppleSignInButton() {
         throw new Error('Apple sign-in completed, but no Supabase session was created.')
       }
 
-      // Apple only gives you the full name on the VERY FIRST sign-in.
-      // Capture and save it immediately if present.
       const fullName = credential.fullName
       if (fullName?.givenName) {
         const displayName = buildAppleDisplayName(fullName.givenName, fullName.familyName)
@@ -69,25 +116,48 @@ export function AppleSignInButton() {
       }
 
       router.replace('/(tabs)')
-
-    } catch (e: any) {
-      if (e.code === 'ERR_REQUEST_CANCELED') {
-        // User cancelled — no need to show an error
+    } catch (error: unknown) {
+      if (isAppleSignInCanceled(error)) {
         return
       }
-      const message = e?.message ?? 'Unable to sign in with Apple right now.'
-      devLog('Apple sign in error', e)
-      Alert.alert('Apple Sign-In Failed', message)
+
+      const message = getAppleSignInErrorMessage(error)
+      devLog('Apple sign in error', error)
+      Alert.alert(copy.auth.login.appleSignInFailedTitle, message)
+    } finally {
+      signInInFlightRef.current = false
+      onSignInEnd?.()
     }
   }
 
+  const isInteractionBlocked = disabled
+
   return (
-    <AppleAuthentication.AppleAuthenticationButton
-      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-      cornerRadius={5}
-      style={{ width: '100%', height: 50 }}
-      onPress={handleAppleSignIn}
-    />
+    <View
+      style={[styles.wrapper, isInteractionBlocked && styles.wrapperDisabled]}
+      pointerEvents={isInteractionBlocked ? 'none' : 'auto'}
+    >
+      <AppleAuthentication.AppleAuthenticationButton
+        buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+        cornerRadius={5}
+        style={styles.button}
+        onPress={handleAppleSignIn}
+      />
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    width: '100%',
+  },
+  wrapperDisabled: {
+    opacity: 0.5,
+  },
+  button: {
+    width: '100%',
+    height: 50,
+    marginBottom: 16
+  },
+})

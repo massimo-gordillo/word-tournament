@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { markPendingSignupIntro } from '@/lib/pendingSignupIntro';
+import { LoadingButton } from '@/components/LoadingButton';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 export default function SignupScreen() {
@@ -42,9 +42,6 @@ export default function SignupScreen() {
       return;
     }
 
-    setLoading(true);
-    setError('');
-
     const trimmedDisplayName = displayName.trim();
     if (trimmedDisplayName.length < MIN_DISPLAY_NAME_LENGTH) {
       setError(
@@ -62,6 +59,9 @@ export default function SignupScreen() {
       );
       return;
     }
+
+    setLoading(true);
+    setError('');
     const emailRedirectTo = Linking.createURL('(tabs)');
 
     const { data, error: signUpError } = await supabase.auth.signUp({
@@ -168,20 +168,16 @@ export default function SignupScreen() {
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+          <LoadingButton
+            style={styles.button}
             onPress={handleSignup}
-            disabled={loading}
+            loading={loading}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>{copy.auth.signup.createButton}</Text>
-            )}
-          </TouchableOpacity>
+            <Text style={styles.buttonText}>{copy.auth.signup.createButton}</Text>
+          </LoadingButton>
 
           <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-            <Text style={styles.linkText}>
+            <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
               {copy.auth.signup.alreadyHavePrefix} <Text style={styles.linkTextBold}>{copy.auth.signup.signInCta}</Text>
             </Text>
           </TouchableOpacity>
@@ -233,9 +229,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
@@ -246,6 +239,9 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     marginTop: 8,
+  },
+  linkTextDisabled: {
+    opacity: 0.5,
   },
   linkTextBold: {
     color: '#10b981',

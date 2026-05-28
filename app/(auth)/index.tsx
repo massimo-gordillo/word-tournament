@@ -1,34 +1,50 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { copy } from '@/app/copy/strings';
-import * as AppleAuthentication from 'expo-apple-authentication';
-import { supabase } from '@/lib/supabase';
+
+type ActiveSignInMethod = 'email' | 'apple' | null;
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [activeSignIn, setActiveSignIn] = useState<ActiveSignInMethod>(null);
   const [error, setError] = useState('');
   const { signIn } = useAuth();
 
+  const signInInProgress = activeSignIn !== null;
+
   const handleLogin = async () => {
+    if (signInInProgress) {
+      return;
+    }
+
     if (!email || !password) {
       setError(copy.auth.login.fillAllFieldsError);
       return;
     }
 
-    setLoading(true);
+    setActiveSignIn('email');
     setError('');
 
-    const { error } = await signIn(email, password);
+    const { error: signInError } = await signIn(email, password);
 
-    if (error) {
+    if (signInError) {
       setPassword('');
-      setError(error.message);
-      setLoading(false);
+      setError(signInError.message);
+      setActiveSignIn(null);
       return;
     }
 
@@ -44,7 +60,11 @@ export default function LoginScreen() {
         <Text style={styles.title}>{copy.auth.login.title}</Text>
         <Text style={styles.subtitle}>{copy.auth.login.subtitle}</Text>
 
-        <AppleSignInButton />
+        <AppleSignInButton
+          disabled={signInInProgress}
+          onSignInStart={() => setActiveSignIn('apple')}
+          onSignInEnd={() => setActiveSignIn(null)}
+        />
 
         <View style={styles.form}>
           <TextInput
@@ -56,7 +76,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            editable={!loading}
+            editable={!signInInProgress}
           />
 
           <TextInput
@@ -68,17 +88,17 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             secureTextEntry={true}
-            editable={!loading}
+            editable={!signInInProgress}
           />
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, signInInProgress && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={signInInProgress}
           >
-            {loading ? (
+            {activeSignIn === 'email' ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.buttonText}>{copy.auth.login.signInButton}</Text>
@@ -88,7 +108,7 @@ export default function LoginScreen() {
           {/* Forgot password — re-enable when email reset is configured
           <TouchableOpacity
             onPress={() => router.push('/(auth)/forgot-password')}
-            disabled={loading}
+            disabled={signInInProgress}
           >
             <Text style={styles.linkText}>
               <Text style={styles.linkTextBold}>{copy.auth.login.forgotPassword}</Text>
@@ -98,14 +118,30 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             onPress={() => router.push('/(auth)/signup')}
-            disabled={loading}
+            disabled={signInInProgress}
           >
-            <Text style={styles.linkText}>
-              {copy.auth.login.noAccountPrefix} <Text style={styles.linkTextBold}>{copy.auth.login.signUpCta}</Text>
+            <Text style={[styles.linkText, signInInProgress && styles.linkTextDisabled]}>
+              {copy.auth.login.noAccountPrefix}{' '}
+              <Text style={styles.linkTextBold}>{copy.auth.login.signUpCta}</Text>
             </Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={activeSignIn === 'apple'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <ActivityIndicator size="large" color="#10b981" style={styles.modalSpinner} />
+            <Text style={styles.modalTitle}>{copy.auth.login.appleSigningInTitle}</Text>
+            <Text style={styles.modalMessage}>{copy.auth.login.appleSigningInMessage}</Text>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -145,7 +181,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  
+
   button: {
     backgroundColor: '#10b981',
     borderRadius: 12,
@@ -167,6 +203,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
   },
+  linkTextDisabled: {
+    opacity: 0.5,
+  },
   linkTextBold: {
     color: '#10b981',
     fontWeight: '600',
@@ -175,5 +214,36 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 14,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 28,
+    alignItems: 'center',
+  },
+  modalSpinner: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

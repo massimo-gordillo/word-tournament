@@ -118,6 +118,8 @@ export default function OngoingTournamentsScreen() {
   };
 
   const handleJoinTournament = async () => {
+    if (joiningTournament) return;
+
     if (!joinCode.trim()) {
       setJoinError(copy.tournaments.joinCodeEmpty);
       return;
@@ -206,10 +208,11 @@ export default function OngoingTournamentsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{copy.tournaments.headerTitle}</Text>
         <TouchableOpacity
-          style={styles.joinButton}
+          style={[styles.joinButton, joiningTournament && styles.joinButtonDisabled]}
           onPress={() => {
             void checkTournamentLimitAndMaybe(() => setJoinModalVisible(true));
           }}
+          disabled={joiningTournament}
         >
           <Search size={20} color="#fff" />
           <Text style={styles.joinButtonText}>{copy.tournaments.joinByCode}</Text>
@@ -342,7 +345,11 @@ export default function OngoingTournamentsScreen() {
         visible={joinModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setJoinModalVisible(false)}
+        onRequestClose={() => {
+          if (!joiningTournament) {
+            setJoinModalVisible(false);
+          }
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -443,6 +450,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 10,
     gap: 8,
+  },
+  joinButtonDisabled: {
+    opacity: 0.5,
   },
   joinButtonText: {
     color: '#fff',
