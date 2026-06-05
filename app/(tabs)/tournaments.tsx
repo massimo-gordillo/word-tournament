@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, RefreshControl, Keyboard } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,7 @@ import { TournamentListItem } from '@/components/TournamentListItem';
 import { Search } from 'lucide-react-native';
 import { formatDateShort } from '@/lib/dateUtils';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
+import { KeyboardAwareModalFrame } from '@/components/KeyboardAwareModalFrame';
 
 interface Tournament {
   id: string;
@@ -118,11 +119,16 @@ export default function OngoingTournamentsScreen() {
     setLimitModalVisible(true);
   };
 
+  const showJoinError = (message: string) => {
+    Keyboard.dismiss();
+    setJoinError(message);
+  };
+
   const handleJoinTournament = async () => {
     if (joiningTournament) return;
 
     if (!joinCode.trim()) {
-      setJoinError(copy.tournaments.joinCodeEmpty);
+      showJoinError(copy.tournaments.joinCodeEmpty);
       return;
     }
 
@@ -138,24 +144,24 @@ export default function OngoingTournamentsScreen() {
     if (error) {
       const message = error.message || copy.tournaments.joinGenericError;
       if (message.includes('already in this tournament')) {
-        setJoinError(copy.tournaments.alreadyInTournament);
+        showJoinError(copy.tournaments.alreadyInTournament);
         return;
       }
       if (message.includes('maximum number of tournaments')) {
         const max = config?.maxTournamentsPerUser ?? 4;
-        setJoinError(fillCopyTemplate(copy.tournaments.maxTournamentsTemplate, { max }));
+        showJoinError(fillCopyTemplate(copy.tournaments.maxTournamentsTemplate, { max }));
         return;
       }
       if (message.includes('tournament is full')) {
         const maxPlayers = config?.maxParticipantsPerTournament ?? 15;
-        setJoinError(fillCopyTemplate(copy.tournaments.tournamentFullTemplate, { max: maxPlayers }));
+        showJoinError(fillCopyTemplate(copy.tournaments.tournamentFullTemplate, { max: maxPlayers }));
         return;
       }
       if (message.includes('Invalid or inactive join code')) {
-        setJoinError(copy.tournaments.invalidJoinCode);
+        showJoinError(copy.tournaments.invalidJoinCode);
         return;
       }
-      setJoinError(message);
+      showJoinError(message);
       return;
     }
 
@@ -352,7 +358,7 @@ export default function OngoingTournamentsScreen() {
           }
         }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAwareModalFrame style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{copy.tournaments.joinModalTitle}</Text>
             <Text style={styles.modalSubtitle}>{copy.tournaments.joinModalSubtitle}</Text>
@@ -364,7 +370,10 @@ export default function OngoingTournamentsScreen() {
               value={joinCode}
               onChangeText={(text) => setJoinCode(text.toUpperCase())}
               autoCapitalize="characters"
+              autoCorrect={false}
               maxLength={6}
+              returnKeyType="done"
+              onSubmitEditing={handleJoinTournament}
               editable={!joiningTournament}
             />
 
@@ -396,7 +405,7 @@ export default function OngoingTournamentsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAwareModalFrame>
       </Modal>
 
       <Modal

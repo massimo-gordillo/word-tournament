@@ -1,5 +1,16 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,10 +20,12 @@ import { AppColors } from '@/constants/colors';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
 import { confirmDestructive } from '@/lib/confirmDestructive';
 import { deleteAccount } from '@/lib/deleteAccount';
+import { showFormError } from '@/lib/keyboardForm';
 
 export default function AccountScreen() {
-  const MIN_DISPLAY_NAME_LENGTH = 4;
+  const MIN_DISPLAY_NAME_LENGTH = 3;
   const MAX_DISPLAY_NAME_LENGTH = 15;
+  const scrollRef = useRef<ScrollView>(null);
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
@@ -52,17 +65,21 @@ export default function AccountScreen() {
     if (accountBusy) return;
 
     if (!displayName.trim()) {
-      setError(copy.account.emptyDisplayName);
+      showFormError(scrollRef, setError, copy.account.emptyDisplayName);
       return;
     }
     if (displayName.trim().length < MIN_DISPLAY_NAME_LENGTH) {
-      setError(
+      showFormError(
+        scrollRef,
+        setError,
         fillCopyTemplate(copy.account.displayNameMinError, { min: MIN_DISPLAY_NAME_LENGTH }),
       );
       return;
     }
     if (displayName.trim().length > MAX_DISPLAY_NAME_LENGTH) {
-      setError(
+      showFormError(
+        scrollRef,
+        setError,
         fillCopyTemplate(copy.account.displayNameMaxError, { max: MAX_DISPLAY_NAME_LENGTH }),
       );
       return;
@@ -80,7 +97,7 @@ export default function AccountScreen() {
     setSaving(false);
 
     if (updateError) {
-      setError(updateError.message);
+      showFormError(scrollRef, setError, updateError.message);
       return;
     }
 
@@ -139,13 +156,19 @@ export default function AccountScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>{copy.account.title}</Text>
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -167,6 +190,10 @@ export default function AccountScreen() {
               onChangeText={setDisplayName}
               placeholder={copy.account.placeholder}
               placeholderTextColor={AppColors.text.subtle}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleUpdateProfile}
               editable={!accountBusy}
               maxLength={MAX_DISPLAY_NAME_LENGTH}
             />
@@ -264,7 +291,7 @@ export default function AccountScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

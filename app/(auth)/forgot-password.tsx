@@ -1,27 +1,29 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
+import { KeyboardAwareScrollView } from '@/components/KeyboardAwareScrollView';
 import { copy } from '@/app/copy/strings';
+import { showFormError } from '@/lib/keyboardForm';
 
 export default function ForgotPasswordScreen() {
+  const scrollRef = useRef<ScrollView>(null);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
     if (!email) {
-      setError(copy.auth.forgotPassword.enterEmailError);
+      showFormError(scrollRef, setError, copy.auth.forgotPassword.enterEmailError);
       return;
     }
 
@@ -34,7 +36,7 @@ export default function ForgotPasswordScreen() {
     });
 
     if (resetError) {
-      setError(resetError.message);
+      showFormError(scrollRef, setError, resetError.message);
       setLoading(false);
       return;
     }
@@ -47,49 +49,52 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <KeyboardAwareScrollView
+      ref={scrollRef}
+      containerStyle={styles.container}
+      contentContainerStyle={styles.scrollContent}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>{copy.auth.forgotPassword.title}</Text>
-        <Text style={styles.subtitle}>{copy.auth.forgotPassword.subtitle}</Text>
+      <Text style={styles.title}>{copy.auth.forgotPassword.title}</Text>
+      <Text style={styles.subtitle}>{copy.auth.forgotPassword.subtitle}</Text>
 
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.forgotPassword.emailPlaceholder}
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            editable={!loading}
-          />
+      <View style={styles.form}>
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.forgotPassword.emailPlaceholder}
+          placeholderTextColor="#999"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          autoComplete="email"
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
+          editable={!loading}
+        />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>{copy.auth.forgotPassword.sendButton}</Text>
-            )}
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>{copy.auth.forgotPassword.sendButton}</Text>
+          )}
+        </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-            <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
-              <Text style={styles.linkTextBold}>{copy.auth.forgotPassword.backToSignIn}</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} disabled={loading}>
+          <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
+            <Text style={styles.linkTextBold}>{copy.auth.forgotPassword.backToSignIn}</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -98,10 +103,11 @@ const styles = createStyles({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 32,

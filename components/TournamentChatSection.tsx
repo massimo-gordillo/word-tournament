@@ -177,6 +177,7 @@ export function TournamentChatSection({
             placeholderTextColor="#9ca3af"
             multiline
             maxLength={400}
+            blurOnSubmit={false}
             editable={!sending}
           />
           <TouchableOpacity

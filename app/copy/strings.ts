@@ -69,7 +69,7 @@ const copyEntries = {
   'auth.signup.createButton': 'Create Account',
   'auth.signup.displayNameMaxError': 'Display name must be {max} characters or less',
   'auth.signup.displayNameMinError': 'Display name must be at least {min} characters',
-  'auth.signup.displayNamePlaceholder': 'Display name',
+  'auth.signup.displayNamePlaceholder': 'Display name (min 3 characters)',
   'auth.signup.emailPlaceholder': 'Email',
   'auth.signup.fillAllFieldsError': 'Please fill in all fields',
   'auth.signup.passwordPlaceholder': 'Password (min 6 characters)',

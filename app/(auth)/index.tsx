@@ -1,23 +1,25 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
+import { KeyboardAwareScrollView } from '@/components/KeyboardAwareScrollView';
 import { copy } from '@/app/copy/strings';
+import { showFormError } from '@/lib/keyboardForm';
 
 type ActiveSignInMethod = 'email' | 'apple' | null;
 
 export default function LoginScreen() {
+  const scrollRef = useRef<ScrollView>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [activeSignIn, setActiveSignIn] = useState<ActiveSignInMethod>(null);
@@ -32,7 +34,7 @@ export default function LoginScreen() {
     }
 
     if (!email || !password) {
-      setError(copy.auth.login.fillAllFieldsError);
+      showFormError(scrollRef, setError, copy.auth.login.fillAllFieldsError);
       return;
     }
 
@@ -43,7 +45,7 @@ export default function LoginScreen() {
 
     if (signInError) {
       setPassword('');
-      setError(signInError.message);
+      showFormError(scrollRef, setError, signInError.message);
       setActiveSignIn(null);
       return;
     }
@@ -52,11 +54,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.content}>
+    <>
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        containerStyle={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
         <Text style={styles.title}>{copy.auth.login.title}</Text>
         <Text style={styles.subtitle}>{copy.auth.login.subtitle}</Text>
 
@@ -76,6 +79,9 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
+            returnKeyType="next"
             editable={!signInInProgress}
           />
 
@@ -88,6 +94,10 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             secureTextEntry={true}
+            textContentType="password"
+            autoComplete="password"
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
             editable={!signInInProgress}
           />
 
@@ -126,7 +136,7 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
 
       <Modal
         visible={activeSignIn === 'apple'}
@@ -142,7 +152,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -151,10 +161,11 @@ const styles = createStyles({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 32,

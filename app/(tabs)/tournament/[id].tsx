@@ -583,7 +583,7 @@ export default function TournamentDetailScreen() {
     <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
       {showFanfare && (
         <View pointerEvents="none" style={styles.fanfareOverlay}>
@@ -653,6 +653,8 @@ export default function TournamentDetailScreen() {
 
       <ScrollView
         style={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

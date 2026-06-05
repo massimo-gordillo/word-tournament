@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
+  ScrollView,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
@@ -13,38 +13,42 @@ import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { markPendingSignupIntro } from '@/lib/pendingSignupIntro';
 import { LoadingButton } from '@/components/LoadingButton';
+import { KeyboardAwareScrollView } from '@/components/KeyboardAwareScrollView';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
+import { scrollToEndAfterLayout, showFormError } from '@/lib/keyboardForm';
 
 export default function SignupScreen() {
-  const MIN_DISPLAY_NAME_LENGTH = 4;
+  const MIN_DISPLAY_NAME_LENGTH = 3;
   const MAX_DISPLAY_NAME_LENGTH = 15;
+  const scrollRef = useRef<ScrollView>(null);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const pendingIntroKey = 'wt_pending_signup_intro';
 
   const handleSignup = async () => {
     if (!email || !displayName.trim() || !password || !confirmPassword) {
-      setError(copy.auth.signup.fillAllFieldsError);
+      showFormError(scrollRef, setError, copy.auth.signup.fillAllFieldsError);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(copy.auth.signup.passwordsMismatchError);
+      showFormError(scrollRef, setError, copy.auth.signup.passwordsMismatchError);
       return;
     }
 
     if (password.length < 6) {
-      setError(copy.auth.signup.passwordTooShortError);
+      showFormError(scrollRef, setError, copy.auth.signup.passwordTooShortError);
       return;
     }
 
     const trimmedDisplayName = displayName.trim();
     if (trimmedDisplayName.length < MIN_DISPLAY_NAME_LENGTH) {
-      setError(
+      showFormError(
+        scrollRef,
+        setError,
         fillCopyTemplate(copy.auth.signup.displayNameMinError, {
           min: MIN_DISPLAY_NAME_LENGTH,
         }),
@@ -52,7 +56,9 @@ export default function SignupScreen() {
       return;
     }
     if (trimmedDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
-      setError(
+      showFormError(
+        scrollRef,
+        setError,
         fillCopyTemplate(copy.auth.signup.displayNameMaxError, {
           max: MAX_DISPLAY_NAME_LENGTH,
         }),
@@ -60,6 +66,7 @@ export default function SignupScreen() {
       return;
     }
 
+    Keyboard.dismiss();
     setLoading(true);
     setError('');
     const emailRedirectTo = Linking.createURL('(tabs)');
@@ -76,7 +83,7 @@ export default function SignupScreen() {
     if (signUpError) {
       setPassword('');
       setConfirmPassword('');
-      setError(signUpError.message);
+      showFormError(scrollRef, setError, signUpError.message);
       setLoading(false);
       return;
     }
@@ -109,81 +116,94 @@ export default function SignupScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <KeyboardAwareScrollView
+      ref={scrollRef}
+      containerStyle={styles.container}
+      contentContainerStyle={styles.scrollContent}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>{copy.auth.signup.title}</Text>
-        <Text style={styles.subtitle}>{copy.auth.signup.subtitle}</Text>
+      <Text style={styles.title}>{copy.auth.signup.title}</Text>
+      <Text style={styles.subtitle}>{copy.auth.signup.subtitle}</Text>
 
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.signup.emailPlaceholder}
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            autoCorrect={false}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            editable={!loading}
-          />
+      <View style={styles.form}>
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.signup.emailPlaceholder}
+          placeholderTextColor="#999"
+          value={email}
+          onChangeText={setEmail}
+          autoCorrect={false}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          autoComplete="email"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.signup.displayNamePlaceholder}
-            placeholderTextColor="#999"
-            value={displayName}
-            onChangeText={setDisplayName}
-            autoCorrect={false}
-            autoCapitalize="words"
-            maxLength={MAX_DISPLAY_NAME_LENGTH}
-            editable={!loading}
-          />
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.signup.displayNamePlaceholder}
+          placeholderTextColor="#999"
+          value={displayName}
+          onChangeText={setDisplayName}
+          autoCorrect={false}
+          autoCapitalize="words"
+          textContentType="name"
+          autoComplete="name"
+          returnKeyType="next"
+          maxLength={MAX_DISPLAY_NAME_LENGTH}
+          editable={!loading}
+        />
 
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.signup.passwordPlaceholder}
-            placeholderTextColor="#999"
-            value={password}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.signup.passwordPlaceholder}
+          placeholderTextColor="#999"
+          value={password}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onChangeText={setPassword}
+          secureTextEntry
+          textContentType="newPassword"
+          autoComplete="new-password"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.signup.confirmPasswordPlaceholder}
-            placeholderTextColor="#999"
-            value={confirmPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.signup.confirmPasswordPlaceholder}
+          placeholderTextColor="#999"
+          value={confirmPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+          textContentType="newPassword"
+          autoComplete="new-password"
+          returnKeyType="done"
+          onSubmitEditing={handleSignup}
+          editable={!loading}
+        />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <LoadingButton
-            style={styles.button}
-            onPress={handleSignup}
-            loading={loading}
-          >
-            <Text style={styles.buttonText}>{copy.auth.signup.createButton}</Text>
-          </LoadingButton>
+        <LoadingButton
+          style={styles.button}
+          onPress={handleSignup}
+          loading={loading}
+        >
+          <Text style={styles.buttonText}>{copy.auth.signup.createButton}</Text>
+        </LoadingButton>
 
-          <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-            <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
-              {copy.auth.signup.alreadyHavePrefix} <Text style={styles.linkTextBold}>{copy.auth.signup.signInCta}</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} disabled={loading}>
+          <Text style={[styles.linkText, loading && styles.linkTextDisabled]}>
+            {copy.auth.signup.alreadyHavePrefix}{' '}
+            <Text style={styles.linkTextBold}>{copy.auth.signup.signInCta}</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -192,10 +212,11 @@ const styles = createStyles({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 32,

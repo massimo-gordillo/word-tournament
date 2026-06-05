@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { KeyboardAwareScrollView } from '@/components/KeyboardAwareScrollView';
 import { copy } from '@/app/copy/strings';
+import { showFormError } from '@/lib/keyboardForm';
 
 export default function ResetPasswordScreen() {
+  const scrollRef = useRef<ScrollView>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,17 +48,17 @@ export default function ResetPasswordScreen() {
 
   const handleSubmit = async () => {
     if (!password || !confirmPassword) {
-      setError(copy.auth.resetPassword.fillAllFieldsError);
+      showFormError(scrollRef, setError, copy.auth.resetPassword.fillAllFieldsError);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(copy.auth.resetPassword.passwordsMismatchError);
+      showFormError(scrollRef, setError, copy.auth.resetPassword.passwordsMismatchError);
       return;
     }
 
     if (password.length < 6) {
-      setError(copy.auth.resetPassword.passwordTooShortError);
+      showFormError(scrollRef, setError, copy.auth.resetPassword.passwordTooShortError);
       return;
     }
 
@@ -68,7 +70,7 @@ export default function ResetPasswordScreen() {
     if (updateError) {
       setPassword('');
       setConfirmPassword('');
-      setError(updateError.message);
+      showFormError(scrollRef, setError, updateError.message);
       setLoading(false);
       return;
     }
@@ -93,55 +95,61 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <KeyboardAwareScrollView
+      ref={scrollRef}
+      containerStyle={styles.container}
+      contentContainerStyle={styles.scrollContent}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>{copy.auth.resetPassword.chooseTitle}</Text>
-        <Text style={styles.subtitle}>{copy.auth.resetPassword.chooseSubtitle}</Text>
+      <Text style={styles.title}>{copy.auth.resetPassword.chooseTitle}</Text>
+      <Text style={styles.subtitle}>{copy.auth.resetPassword.chooseSubtitle}</Text>
 
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.resetPassword.newPasswordPlaceholder}
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            secureTextEntry
-            editable={!loading}
-          />
+      <View style={styles.form}>
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.resetPassword.newPasswordPlaceholder}
+          placeholderTextColor="#999"
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          textContentType="newPassword"
+          autoComplete="new-password"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            style={styles.input}
-            placeholder={copy.auth.resetPassword.confirmPlaceholder}
-            placeholderTextColor="#999"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            secureTextEntry
-            editable={!loading}
-          />
+        <TextInput
+          style={styles.input}
+          placeholder={copy.auth.resetPassword.confirmPlaceholder}
+          placeholderTextColor="#999"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          textContentType="newPassword"
+          autoComplete="new-password"
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
+          editable={!loading}
+        />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>{copy.auth.resetPassword.updateButton}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>{copy.auth.resetPassword.updateButton}</Text>
+          )}
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -154,10 +162,11 @@ const styles = createStyles({
     justifyContent: 'center',
     padding: 24,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,

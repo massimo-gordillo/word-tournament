@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,6 +22,7 @@ import { DailySubmissionCard } from '@/components/DailySubmissionCard';
 import { devLog } from '@/utils/logger';
 import { copy } from '@/app/copy/strings';
 import { withTimeout } from '@/lib/requestTimeout';
+import { showFormError } from '@/lib/keyboardForm';
 
 interface Submission {
   submission_text: string;
@@ -35,6 +38,7 @@ const RESULT_CHAT_PLACEHOLDER_MESSAGE = 'result';
 const PENDING_SIGNUP_INTRO_KEY = 'wt_pending_signup_intro';
 
 export default function DailySubmissionScreen() {
+  const scrollRef = useRef<ScrollView>(null);
   const { user } = useAuth();
   const { config } = useAppConfig();
   const router = useRouter();
@@ -328,12 +332,12 @@ export default function DailySubmissionScreen() {
     if (loading) return;
 
     if (!submissionText.trim()) {
-      setError(copy.dailySubmission.emptySubmissionError);
+      showFormError(scrollRef, setError, copy.dailySubmission.emptySubmissionError);
       return;
     }
 
     if (isPastCutoff) {
-      setError(copy.dailySubmission.pastCutoffError);
+      showFormError(scrollRef, setError, copy.dailySubmission.pastCutoffError);
       return;
     }
 
@@ -342,14 +346,14 @@ export default function DailySubmissionScreen() {
 
     const parsed = parseWordle(submissionText);
     if (!parsed) {
-      setError(copy.dailySubmission.invalidGridError);
+      showFormError(scrollRef, setError, copy.dailySubmission.invalidGridError);
       setLoading(false);
       return;
     }
 
     if (!parsed.normalizedGrid) {
       devLog('parseWord: missing normalizedGrid on parsed result', parsed);
-      setError(copy.dailySubmission.parseFailedError);
+      showFormError(scrollRef, setError, copy.dailySubmission.parseFailedError);
       setLoading(false);
       return;
     }
@@ -375,9 +379,9 @@ export default function DailySubmissionScreen() {
       const message = dbError.message || copy.dailySubmission.dbSaveFallbackError;
       devLog('handleSubmit: backend error', { message, dbError });
       if (message.toLowerCase().includes('invalid word grid')) {
-        setError(copy.dailySubmission.dbInvalidGridError);
+        showFormError(scrollRef, setError, copy.dailySubmission.dbInvalidGridError);
       } else {
-        setError(message);
+        showFormError(scrollRef, setError, message);
       }
       return;
     }
@@ -480,12 +484,19 @@ export default function DailySubmissionScreen() {
   return (
     <>
       {introModal}
-      <ScrollView
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
       >
+        <ScrollView
+          ref={scrollRef}
+          style={styles.container}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
         <View style={styles.header}>
           <Text style={styles.title}>{copy.dailySubmission.formTitle}</Text>
           <Text style={styles.timer}>{timeUntilCutoff}</Text>
@@ -522,6 +533,7 @@ export default function DailySubmissionScreen() {
             onChangeText={setSubmissionText}
             multiline
             numberOfLines={8}
+            textAlignVertical="top"
             editable={!loading && !isPastCutoff}
           />
 
@@ -560,7 +572,8 @@ export default function DailySubmissionScreen() {
             No submission: {config?.pointsMissed ?? -2} points
           </Text>
         </View>*/}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }
