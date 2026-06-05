@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { AppColors } from '@/constants/colors';
 import { formatDateOrToday } from '@/lib/dateUtils';
 
 type Variant = 'screen' | 'chat';
@@ -79,13 +80,13 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
   },
   cardScreen: {
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   },
   cardChat: {
     marginBottom: 0,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 2,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: AppColors.status.neutral,
     marginBottom: 0,
   },
   headerRow: {
@@ -113,12 +114,12 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   statusText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#4b5563',
+    color: AppColors.text.body,
   },
   wordGrid: {
     marginTop: 0,

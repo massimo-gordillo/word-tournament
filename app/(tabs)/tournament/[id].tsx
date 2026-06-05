@@ -14,6 +14,7 @@ import {
   Easing,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppConfig } from '@/contexts/ConfigContext';
@@ -442,7 +443,7 @@ export default function TournamentDetailScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={AppColors.brand.primary} />
       </View>
     );
   }
@@ -639,7 +640,7 @@ export default function TournamentDetailScreen() {
       )}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft size={24} color="#fff" />
+          <ChevronLeft size={24} color={AppColors.text.inverse} />
         </TouchableOpacity>
         <View style={styles.headerText}>
           <Text style={styles.title}>{tournament.name}</Text>
@@ -684,7 +685,7 @@ export default function TournamentDetailScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Trophy size={20} color="#1a1a1a" />
+            <Trophy size={20} color={AppColors.text.primary} />
             <Text style={styles.sectionTitle}>
               {isCompleted
                 ? copy.tournamentDetail.leaderboardFinal
@@ -760,9 +761,9 @@ export default function TournamentDetailScreen() {
           >
             <Text style={styles.sectionTitle}>{copy.tournamentDetail.allSubmissions}</Text>
             {allSubmissionsCollapsed ? (
-              <ChevronDown size={20} color="#1a1a1a" />
+              <ChevronDown size={20} color={AppColors.text.primary} />
             ) : (
-              <ChevronUp size={20} color="#1a1a1a" />
+              <ChevronUp size={20} color={AppColors.text.primary} />
             )}
           </TouchableOpacity>
           {!allSubmissionsCollapsed && (
@@ -881,9 +882,9 @@ export default function TournamentDetailScreen() {
           >
             <Text style={styles.sectionTitle}>{copy.tournamentDetail.tournamentInfo}</Text>
             {tournamentInfoCollapsed ? (
-              <ChevronDown size={20} color="#1a1a1a" />
+              <ChevronDown size={20} color={AppColors.text.primary} />
             ) : (
-              <ChevronUp size={20} color="#1a1a1a" />
+              <ChevronUp size={20} color={AppColors.text.primary} />
             )}
           </TouchableOpacity>
           {!tournamentInfoCollapsed && (
@@ -910,7 +911,7 @@ export default function TournamentDetailScreen() {
                 disabled={forfeitLoading}
               >
                 {forfeitLoading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={AppColors.text.inverse} />
                 ) : (
                   <Text style={styles.forfeitButtonText}>{copy.tournamentDetail.forfeitButton}</Text>
                 )}
@@ -927,7 +928,7 @@ export default function TournamentDetailScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   keyboardAvoid: {
     flex: 1,
@@ -944,15 +945,15 @@ const styles = createStyles({
   },
   fanfareBadge: {
     marginTop: 90,
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
+    backgroundColor: AppColors.background.warningTint,
+    borderColor: AppColors.status.warning,
     borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 18,
     paddingVertical: 8,
   },
   fanfareText: {
-    color: '#92400e',
+    color: AppColors.warning.text,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -963,17 +964,17 @@ const styles = createStyles({
   },
   retryLoadButton: {
     marginTop: 12,
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
   retryLoadButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontWeight: '600',
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
@@ -983,7 +984,7 @@ const styles = createStyles({
   },
   headerDate: {
     fontSize: 24,
-    color: '#fff',
+    color: AppColors.text.inverse,
   },
   headerText: {
     flexDirection: 'column',
@@ -995,21 +996,21 @@ const styles = createStyles({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
     flex: 1,
   },
   content: {
     flex: 1,
   },
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     margin: 16,
     marginBottom: 16,
     marginTop: 8,
     padding: 4,
     paddingHorizontal: 16,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1017,34 +1018,34 @@ const styles = createStyles({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: AppColors.text.muted,
     marginTop: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontWeight: '500',
     marginBottom: 6,
   },
   waitingCard: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: AppColors.background.warningTint,
     marginHorizontal: 16,
     marginBottom: 0,
     padding: 8,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fbbf24',
+    borderColor: AppColors.border.warningStrong,
   },
   waitingText: {
     fontSize: 16,
-    color: '#92400e',
+    color: AppColors.warning.text,
     fontWeight: '600',
     marginBottom: 4,
   },
   waitingSubtext: {
     fontSize: 14,
-    color: '#92400e',
+    color: AppColors.warning.text,
   },
   section: {
     padding: 16,
@@ -1055,12 +1056,12 @@ const styles = createStyles({
   resultsDayTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 4,
   },
   resultsDayDivider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: AppColors.background.neutral,
     marginBottom: 8,
   },
   sectionHeader: {
@@ -1072,7 +1073,7 @@ const styles = createStyles({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   collapsibleHeader: {
     flexDirection: 'row',
@@ -1081,22 +1082,22 @@ const styles = createStyles({
   },
   leaderboardStatus: {
     fontSize: 14,
-    color: '#4b5563',
+    color: AppColors.text.body,
     marginBottom: 4,
   },
   leaderboardSubtext: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: AppColors.text.subtle,
     marginBottom: 12,
   },
   scoreCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1106,13 +1107,13 @@ const styles = createStyles({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   rankNumber: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -1122,29 +1123,29 @@ const styles = createStyles({
   scoreName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   forfeitedText: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
   },
   scorePoints: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#10b981',
+    color: AppColors.brand.primary,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: AppColors.text.muted,
     fontSize: 14,
     paddingVertical: 20,
   },
   submissionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1159,12 +1160,12 @@ const styles = createStyles({
   submissionName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   submissionScore: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#10b981',
+    color: AppColors.brand.primary,
   },
   playerRow: {
     flexDirection: 'row',
@@ -1172,15 +1173,15 @@ const styles = createStyles({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: AppColors.background.neutral,
   },
   playerName: {
     fontSize: 14,
-    color: '#1f2933',
+    color: AppColors.text.dark,
   },
   playerStatus: {
     fontSize: 14,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
   wordGrid: {
@@ -1193,12 +1194,12 @@ const styles = createStyles({
     letterSpacing: 4,
   },
   forfeitButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: AppColors.status.error,
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -1208,7 +1209,7 @@ const styles = createStyles({
     opacity: 0.7,
   },
   forfeitButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },

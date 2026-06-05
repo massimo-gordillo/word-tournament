@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import { AppColors } from '@/constants/colors';
 
 type LoadingButtonProps = {
   onPress: () => void;
@@ -24,7 +25,7 @@ export function LoadingButton({
   disabled = false,
   style,
   disabledStyle = styles.disabled,
-  indicatorColor = '#fff',
+  indicatorColor = AppColors.text.inverse,
   accessibilityLabel,
   children,
 }: LoadingButtonProps) {

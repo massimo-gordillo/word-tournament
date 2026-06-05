@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl, useWindowDimensions } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Target, TrendingUp } from 'lucide-react-native';
@@ -97,7 +98,7 @@ export default function StatisticsScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={AppColors.brand.primary} />
       </View>
     );
   }
@@ -117,7 +118,7 @@ export default function StatisticsScreen() {
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, statCardLayoutStyle]}>
             <View style={styles.statIcon}>
-              <Target size={24} color="#10b981" />
+              <Target size={24} color={AppColors.brand.primary} />
             </View>
             <Text style={styles.statValue}>{stats?.averageScore.toFixed(1)}</Text>
             <Text style={styles.statLabel}>{copy.stats.averageScore}</Text>
@@ -126,7 +127,7 @@ export default function StatisticsScreen() {
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
             <View style={styles.statIcon}>
-              <TrendingUp size={24} color="#3b82f6" />
+              <TrendingUp size={24} color={AppColors.accent.blue} />
             </View>
             <Text style={styles.statValue}>{stats?.totalSubmissions}</Text>
             <Text style={styles.statLabel}>{copy.stats.totalSubmissions}</Text>
@@ -135,7 +136,7 @@ export default function StatisticsScreen() {
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
             <View style={styles.statIcon}>
-              <Trophy size={24} color="#f59e0b" />
+              <Trophy size={24} color={AppColors.status.warning} />
             </View>
             <Text style={styles.statValue}>{stats?.tournamentWins}</Text>
             <Text style={styles.statLabel}>{copy.stats.tournamentWins}</Text>
@@ -144,7 +145,7 @@ export default function StatisticsScreen() {
 
           <View style={[styles.statCard, statCardLayoutStyle]}>
             <View style={styles.statIcon}>
-              <Trophy size={24} color="#8b5cf6" />
+              <Trophy size={24} color={AppColors.accent.purple} />
             </View>
             <Text style={styles.statValue}>{stats?.tournamentsParticipated}</Text>
             <Text style={styles.statLabel}>{copy.stats.tournamentsLabel}</Text>
@@ -210,7 +211,7 @@ export default function StatisticsScreen() {
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>{copy.stats.missedFailed}</Text>
-              <Text style={[styles.guideValue, { color: '#ef4444' }]}>
+              <Text style={[styles.guideValue, { color: AppColors.status.error }]}>
                 {config?.pointsMissed ?? -2} {copy.stats.pointsSuffix}
               </Text>
             </View>
@@ -224,7 +225,7 @@ export default function StatisticsScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   loadingContainer: {
     flex: 1,
@@ -232,7 +233,7 @@ const styles = createStyles({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     padding: 24,
     paddingTop: 40,
     paddingBottom: 20,
@@ -240,7 +241,7 @@ const styles = createStyles({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
   },
   content: {
     flex: 1,
@@ -252,11 +253,11 @@ const styles = createStyles({
     gap: 12,
   },
   statCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -277,18 +278,18 @@ const styles = createStyles({
   statValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
   },
   statSubtext: {
     fontSize: 12,
-    color: '#999',
+    color: AppColors.text.placeholder,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -298,14 +299,14 @@ const styles = createStyles({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 16,
   },
   detailCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -317,16 +318,16 @@ const styles = createStyles({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: AppColors.background.subtle,
   },
   detailLabel: {
     fontSize: 16,
-    color: '#666',
+    color: AppColors.text.muted,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   scoreGuideRow: {
     flexDirection: 'row',
@@ -336,11 +337,11 @@ const styles = createStyles({
   },
   guideLabel: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
   },
   guideValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#10b981',
+    color: AppColors.brand.primary,
   },
 });

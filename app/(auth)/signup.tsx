@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
@@ -128,7 +129,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder={copy.auth.signup.emailPlaceholder}
-          placeholderTextColor="#999"
+          placeholderTextColor={AppColors.text.placeholder}
           value={email}
           onChangeText={setEmail}
           autoCorrect={false}
@@ -143,7 +144,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder={copy.auth.signup.displayNamePlaceholder}
-          placeholderTextColor="#999"
+          placeholderTextColor={AppColors.text.placeholder}
           value={displayName}
           onChangeText={setDisplayName}
           autoCorrect={false}
@@ -158,7 +159,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder={copy.auth.signup.passwordPlaceholder}
-          placeholderTextColor="#999"
+          placeholderTextColor={AppColors.text.placeholder}
           value={password}
           autoCapitalize="none"
           autoCorrect={false}
@@ -173,7 +174,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder={copy.auth.signup.confirmPasswordPlaceholder}
-          placeholderTextColor="#999"
+          placeholderTextColor={AppColors.text.placeholder}
           value={confirmPassword}
           autoCapitalize="none"
           autoCorrect={false}
@@ -210,7 +211,7 @@ export default function SignupScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   scrollContent: {
     flexGrow: 1,
@@ -221,13 +222,13 @@ const styles = createStyles({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
     marginBottom: 48,
   },
@@ -235,29 +236,29 @@ const styles = createStyles({
     gap: 16,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: AppColors.border.light,
   },
   button: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
   linkText: {
     textAlign: 'center',
-    color: '#666',
+    color: AppColors.text.muted,
     fontSize: 14,
     marginTop: 8,
   },
@@ -265,11 +266,11 @@ const styles = createStyles({
     opacity: 0.5,
   },
   linkTextBold: {
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '600',
   },
   error: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     textAlign: 'center',
   },

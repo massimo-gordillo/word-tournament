@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
@@ -96,7 +97,7 @@ export default function CheckEmailScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={AppColors.text.inverse} />
           ) : (
             <Text style={styles.buttonText}>{copy.auth.checkEmail.resendButton}</Text>
           )}
@@ -116,7 +117,7 @@ export default function CheckEmailScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   content: {
     flex: 1,
@@ -126,26 +127,26 @@ const styles = createStyles({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     textAlign: 'center',
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 22,
   },
   email: {
     fontSize: 15,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     textAlign: 'center',
     fontWeight: '600',
     marginBottom: 24,
   },
   button: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -155,13 +156,13 @@ const styles = createStyles({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
   linkText: {
     textAlign: 'center',
-    color: '#666',
+    color: AppColors.text.muted,
     fontSize: 14,
     marginTop: 24,
   },
@@ -169,17 +170,17 @@ const styles = createStyles({
     opacity: 0.5,
   },
   linkTextBold: {
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '600',
   },
   error: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,
   },
   sent: {
-    color: '#059669',
+    color: AppColors.status.successDark,
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, GestureResponderEvent } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 
 type Props = {
   title: string;
@@ -45,11 +46,11 @@ export function TournamentListItem({
 
 const styles = createStyles({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -64,7 +65,7 @@ const styles = createStyles({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     flex: 1,
     marginRight: 8,
   },
@@ -74,18 +75,18 @@ const styles = createStyles({
     borderRadius: 12,
   },
   statusText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 12,
     fontWeight: '600',
   },
   dateText: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 4,
   },
   secondaryText: {
     fontSize: 14,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
 });

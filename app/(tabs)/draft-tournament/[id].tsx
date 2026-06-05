@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Platform } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -355,7 +356,7 @@ export default function DraftTournamentScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={AppColors.brand.primary} />
       </View>
     );
   }
@@ -380,7 +381,7 @@ export default function DraftTournamentScreen() {
         style={[styles.copyButton, actionBusy && styles.controlDisabled]}
         disabled={actionBusy}
       >
-        <Copy size={18} color="#10b981" />
+        <Copy size={18} color={AppColors.brand.primary} />
         <Text style={styles.copyButtonText}>Copy</Text>
       </TouchableOpacity>
     </View>
@@ -416,7 +417,7 @@ export default function DraftTournamentScreen() {
             style={[styles.backButton, actionBusy && styles.controlDisabled]}
             disabled={actionBusy}
           >
-            <ChevronLeft size={24} color="#fff" />
+            <ChevronLeft size={24} color={AppColors.text.inverse} />
           </TouchableOpacity>
           <Text style={styles.title}>{tournament.name}</Text>
         </View>
@@ -447,7 +448,7 @@ export default function DraftTournamentScreen() {
           {joinCodeSection}
           <View style={styles.participantsSection}>
             <View style={styles.participantsHeader}>
-              <Users size={24} color="#1a1a1a" />
+              <Users size={24} color={AppColors.text.primary} />
               <Text style={styles.participantsTitle}>
                 {fillCopyTemplate(copy.draftTournament.playersTitleTemplate, {
                   current: participants.length,
@@ -478,7 +479,7 @@ export default function DraftTournamentScreen() {
             disabled={actionBusy}
           >
             {leaving ? (
-              <ActivityIndicator color="#ef4444" />
+              <ActivityIndicator color={AppColors.status.error} />
             ) : (
               <Text style={styles.leaveButtonText}>{copy.draftTournament.leaveTournament}</Text>
             )}
@@ -496,7 +497,7 @@ export default function DraftTournamentScreen() {
           style={[styles.backButton, actionBusy && styles.controlDisabled]}
           disabled={actionBusy}
         >
-          <ChevronLeft size={24} color="#fff" />
+          <ChevronLeft size={24} color={AppColors.text.inverse} />
         </TouchableOpacity>
         <Text style={styles.title}>{tournament.name}</Text>
       </View>
@@ -526,7 +527,7 @@ export default function DraftTournamentScreen() {
 
         <View style={styles.participantsSection}>
           <View style={styles.participantsHeader}>
-            <Users size={24} color="#1a1a1a" />
+            <Users size={24} color={AppColors.text.primary} />
             <Text style={styles.participantsTitle}>
               {fillCopyTemplate(copy.draftTournament.playersTitleTemplate, {
                 current: participants.length,
@@ -559,7 +560,7 @@ export default function DraftTournamentScreen() {
                     disabled={actionBusy}
                   >
                     {kickingUserId === participant.user_id ? (
-                      <ActivityIndicator size="small" color="#ef4444" />
+                      <ActivityIndicator size="small" color={AppColors.status.error} />
                     ) : (
                       <Text style={styles.kickButtonText}>×</Text>
                     )}
@@ -592,10 +593,10 @@ export default function DraftTournamentScreen() {
           disabled={!canStart || actionBusy}
         >
           {starting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={AppColors.text.inverse} />
           ) : (
             <>
-              <Play size={20} color="#fff" />
+              <Play size={20} color={AppColors.text.inverse} />
               <Text style={styles.startButtonText}>{copy.draftTournament.startButton}</Text>
             </>
           )}
@@ -606,10 +607,10 @@ export default function DraftTournamentScreen() {
           disabled={actionBusy}
         >
           {discarding ? (
-            <ActivityIndicator color="#ef4444" />
+            <ActivityIndicator color={AppColors.status.error} />
           ) : (
             <>
-              <Trash2 size={20} color="#ef4444" />
+              <Trash2 size={20} color={AppColors.status.error} />
               <Text style={styles.discardButtonText}>{copy.draftTournament.discardButton}</Text>
             </>
           )}
@@ -622,7 +623,7 @@ export default function DraftTournamentScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   loadingContainer: {
     flex: 1,
@@ -630,7 +631,7 @@ const styles = createStyles({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     padding: 24,
     paddingTop: 60,
     flexDirection: 'row',
@@ -642,7 +643,7 @@ const styles = createStyles({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
     flex: 1,
   },
   content: {
@@ -653,30 +654,30 @@ const styles = createStyles({
     paddingBottom: 24,
   },
   waitingCard: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: AppColors.background.infoTintAlt,
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#0ea5e9',
+    borderColor: AppColors.border.infoAlt,
   },
   waitingTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0369a1',
+    color: AppColors.info.textAlt,
     marginBottom: 8,
   },
   waitingMessage: {
     fontSize: 14,
-    color: '#0c4a6e',
+    color: AppColors.info.textDark,
     lineHeight: 20,
   },
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -684,22 +685,22 @@ const styles = createStyles({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontWeight: '500',
   },
   joinCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -708,13 +709,13 @@ const styles = createStyles({
   },
   joinCodeLabel: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     fontWeight: '500',
   },
   joinCodeValue: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#10b981',
+    color: AppColors.brand.primary,
     letterSpacing: 2,
     flex: 1,
   },
@@ -724,20 +725,20 @@ const styles = createStyles({
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: AppColors.background.successTint,
     borderRadius: 8,
   },
   copyButtonText: {
     fontSize: 14,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
   participantsSection: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -752,7 +753,7 @@ const styles = createStyles({
   participantsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   emptyState: {
     alignItems: 'center',
@@ -761,37 +762,37 @@ const styles = createStyles({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
   },
   participantCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: AppColors.background.subtle,
   },
   participantAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   participantInitial: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 18,
     fontWeight: '600',
   },
   participantName: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontWeight: '500',
   },
   kickButton: {
@@ -801,24 +802,24 @@ const styles = createStyles({
   },
   kickButtonText: {
     fontSize: 20,
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontWeight: '700',
   },
   warningCard: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: AppColors.background.warningTint,
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#fbbf24',
+    borderColor: AppColors.border.warningStrong,
   },
   warningText: {
     fontSize: 14,
-    color: '#92400e',
+    color: AppColors.warning.text,
     textAlign: 'center',
   },
   startButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -826,18 +827,18 @@ const styles = createStyles({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   startButtonDisabled: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: AppColors.background.disabled,
     opacity: 0.6,
   },
   startButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -849,11 +850,11 @@ const styles = createStyles({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#ef4444',
+    borderColor: AppColors.status.error,
     backgroundColor: 'transparent',
   },
   discardButtonText: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -861,19 +862,19 @@ const styles = createStyles({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: AppColors.background.neutral,
   },
   errorText: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'center',
   },
   leaveButton: {
     borderWidth: 2,
-    borderColor: '#ef4444',
+    borderColor: AppColors.status.error,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -887,7 +888,7 @@ const styles = createStyles({
     opacity: 0.5,
   },
   leaveButtonText: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 16,
     fontWeight: '600',
   },

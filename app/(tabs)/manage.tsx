@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, RefreshControl } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -322,9 +323,9 @@ export default function ManageTournamentsScreen() {
       >
         <View style={[styles.menuIconContainer, { backgroundColor: iconBackgroundColor }]}>
           {isPending ? (
-            <ActivityIndicator size="large" color="#fff" />
+            <ActivityIndicator size="large" color={AppColors.text.inverse} />
           ) : (
-            <Icon size={32} color="#fff" />
+            <Icon size={32} color={AppColors.text.inverse} />
           )}
         </View>
         <Text style={styles.menuCardTitle}>{title}</Text>
@@ -339,7 +340,7 @@ export default function ManageTournamentsScreen() {
         {renderMenuCard(
           'create',
           () => void handleMenuCreate(),
-          '#10b981',
+          AppColors.brand.primary,
           Plus,
           copy.manage.createTitle,
           copy.manage.createSubtitle,
@@ -347,7 +348,7 @@ export default function ManageTournamentsScreen() {
         {renderMenuCard(
           'drafts',
           () => void handleMenuDrafts(),
-          '#f59e0b',
+          AppColors.status.warning,
           FileText,
           copy.manage.draftsTitle,
           copy.manage.draftsSubtitle,
@@ -355,7 +356,7 @@ export default function ManageTournamentsScreen() {
         {renderMenuCard(
           'past',
           () => void handleMenuPast(),
-          '#6b7280',
+          AppColors.status.neutral,
           History,
           copy.manage.pastTitle,
           copy.manage.pastSubtitle,
@@ -379,7 +380,7 @@ export default function ManageTournamentsScreen() {
       </TouchableOpacity>
 
       {loading ? (
-        <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={AppColors.brand.primary} style={{ marginTop: 40 }} />
       ) : draftTournaments.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>{copy.manage.emptyDraftsTitle}</Text>
@@ -397,7 +398,7 @@ export default function ManageTournamentsScreen() {
               key={tournament.id}
               title={tournament.created_by === user?.id ? copy.manage.yourTournament : tournament.name}
               statusLabel={copy.manage.draftStatus}
-              statusColor="#f59e0b"
+              statusColor={AppColors.status.warning}
               durationLabel={calendarDays.toString()}
               secondaryText={`${copy.manage.joinCodeSecondaryPrefix}${tournament.join_code}`}
               onPress={() =>
@@ -428,7 +429,7 @@ export default function ManageTournamentsScreen() {
       </TouchableOpacity>
 
       {loading ? (
-        <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={AppColors.brand.primary} style={{ marginTop: 40 }} />
       ) : pastTournaments.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>{copy.manage.emptyPastTitle}</Text>
@@ -448,7 +449,7 @@ export default function ManageTournamentsScreen() {
               title={tournament.created_by === user?.id ? copy.manage.yourTournament : tournament.name}
               showWinnerTrophy={wonTournamentIds.has(tournament.id)}
               statusLabel={showForfeitedLabel ? copy.manage.forfeitedStatus : copy.manage.closedStatus}
-              statusColor={showForfeitedLabel ? '#ef4444' : '#6b7280'}
+              statusColor={showForfeitedLabel ? AppColors.status.error : AppColors.status.neutral}
               durationLabel={calendarDays.toString()}
               endDateLabel={formatDateShort(tournament.end_date)}
               onPress={() =>
@@ -504,7 +505,7 @@ export default function ManageTournamentsScreen() {
               disabled={saving}
             >
               <Text style={styles.dropdownButtonText}>{duration.label}</Text>
-              <ChevronDown size={20} color="#666" />
+              <ChevronDown size={20} color={AppColors.text.muted} />
             </TouchableOpacity>
 
             {showDurationPicker && (
@@ -561,7 +562,7 @@ export default function ManageTournamentsScreen() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={AppColors.text.inverse} />
                 ) : (
                   <Text style={styles.modalButtonTextSave}>{copy.manage.create}</Text>
                 )}
@@ -602,10 +603,10 @@ export default function ManageTournamentsScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     padding: 24,
     paddingTop: 40,
     paddingBottom: 20,
@@ -613,7 +614,7 @@ const styles = createStyles({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
   },
   content: {
     flex: 1,
@@ -623,11 +624,11 @@ const styles = createStyles({
     gap: 16,
   },
   menuCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -647,12 +648,12 @@ const styles = createStyles({
   menuCardTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 4,
   },
   menuCardSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
   },
   backButton: {
@@ -660,15 +661,15 @@ const styles = createStyles({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
   tournamentCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -683,7 +684,7 @@ const styles = createStyles({
   tournamentName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     flex: 1,
   },
   statusBadge: {
@@ -692,18 +693,18 @@ const styles = createStyles({
     borderRadius: 12,
   },
   statusText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 12,
     fontWeight: '600',
   },
   tournamentDate: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 4,
   },
   joinCodeText: {
     fontSize: 14,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
   emptyState: {
@@ -714,63 +715,63 @@ const styles = createStyles({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: AppColors.overlay.dark,
     justifyContent: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 16,
     padding: 24,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 8,
     marginTop: 8,
   },
   infoBox: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: AppColors.background.input,
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: AppColors.background.neutral,
   },
   infoBoxLabel: {
     fontSize: 12,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 4,
     fontWeight: '500',
   },
   infoBoxValue: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontWeight: '600',
   },
   dropdownButton: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: AppColors.background.input,
     borderRadius: 8,
     padding: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: AppColors.background.neutral,
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -778,34 +779,34 @@ const styles = createStyles({
   },
   dropdownButtonText: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   dropdownList: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: AppColors.background.neutral,
     marginBottom: 16,
     overflow: 'hidden',
   },
   dropdownItem: {
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: AppColors.background.neutral,
   },
   dropdownItemSelected: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: AppColors.background.successTint,
   },
   dropdownItemText: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   dropdownItemTextSelected: {
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '600',
   },
   error: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     marginBottom: 16,
   },
@@ -821,24 +822,24 @@ const styles = createStyles({
     alignItems: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: AppColors.background.subtle,
   },
   modalButtonSave: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
   },
   modalButtonTextCancel: {
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },
   modalButtonTextSave: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
   limitMessage: {
     fontSize: 14,
-    color: '#4b5563',
+    color: AppColors.text.body,
     marginBottom: 20,
   },
   buttonDisabled: {

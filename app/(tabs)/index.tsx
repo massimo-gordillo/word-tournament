@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -435,7 +436,7 @@ export default function DailySubmissionScreen() {
       <>
         {introModal}
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
+          <ActivityIndicator size="large" color={AppColors.brand.primary} />
         </View>
       </>
     );
@@ -528,7 +529,7 @@ export default function DailySubmissionScreen() {
           <TextInput
             style={styles.textArea}
             placeholder={isPastCutoff ? copy.dailySubmission.closedInputPlaceholder : copy.dailySubmission.openInputPlaceholder}
-            placeholderTextColor="#999"
+            placeholderTextColor={AppColors.text.placeholder}
             value={submissionText}
             onChangeText={setSubmissionText}
             multiline
@@ -545,7 +546,7 @@ export default function DailySubmissionScreen() {
             disabled={loading || isPastCutoff}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={AppColors.text.inverse} />
             ) : (
               <Text style={styles.buttonText}>
                 {isPastCutoff ? copy.dailySubmission.closedSubmitButton : copy.dailySubmission.submitButton}
@@ -583,11 +584,11 @@ const styles = createStyles({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: AppColors.overlay.medium,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -595,46 +596,46 @@ const styles = createStyles({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 12,
     padding: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   modalBodyTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginTop: 8,
     marginBottom: 6,
   },
   modalBodyText: {
     fontSize: 14,
-    color: '#4b5563',
+    color: AppColors.text.body,
     marginBottom: 4,
   },
   modalButton: {
     marginTop: 16,
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
   },
   modalButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 15,
     fontWeight: '600',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     padding: 24,
     paddingTop: 40,
     paddingBottom: 20,
@@ -643,21 +644,21 @@ const styles = createStyles({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
     marginBottom: 0,
   },
   timer: {
     fontSize: 16,
-    color: '#fff',
+    color: AppColors.text.inverse,
     opacity: 0.9,
   },
   instructionsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     margin: 16,
     marginTop: 0,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -666,60 +667,60 @@ const styles = createStyles({
   instructionsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   instructionsText: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 6,
   },
   formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   textArea: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: AppColors.background.input,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: AppColors.background.neutral,
     minHeight: 150,
     textAlignVertical: 'top',
   },
   button: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 16,
   },
   buttonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: AppColors.text.subtle,
   },
   buttonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
   error: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     marginTop: 8,
   },
   loadErrorCard: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: AppColors.background.errorTint,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: AppColors.border.dangerStrong,
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
@@ -727,23 +728,23 @@ const styles = createStyles({
   retryButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: '#ef4444',
+    backgroundColor: AppColors.status.error,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   retryButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 13,
     fontWeight: '600',
   },
   scoringCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     marginHorizontal: 16,
     marginBottom: 24,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -752,7 +753,7 @@ const styles = createStyles({
   scoringTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   scoringRow: {
@@ -762,15 +763,15 @@ const styles = createStyles({
   },
   scoringText: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 6,
   },
   submittedCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     margin: 16,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -780,32 +781,32 @@ const styles = createStyles({
   submittedTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#10b981',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   scoreText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 16,
   },
   submittedTime: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginTop: 12,
   },
   infoCard: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: AppColors.background.infoTint,
     marginHorizontal: 16,
     marginBottom: 24,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: AppColors.border.info,
   },
   infoText: {
     fontSize: 14,
-    color: '#1e40af',
+    color: AppColors.info.text,
     marginBottom: 8,
     textAlign: 'center',
   },

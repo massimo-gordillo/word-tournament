@@ -34,7 +34,7 @@ export default function TabLayout() {
           borderTopColor: AppColors.border.default,
           paddingTop: 8,
           paddingBottom: 16,
-          height: 75,
+          height: 80,
         },
         tabBarLabelStyle: {
           fontFamily: AppFonts.medium,

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { Lock, Send } from 'lucide-react-native';
 import { DailySubmissionCard } from '@/components/DailySubmissionCard';
 import { AppFonts } from '@/constants/typography';
@@ -83,7 +84,7 @@ export function TournamentChatSection({
                 todayEst,
                 resultsReadyForToday,
               );
-              const lockIconColor = isSelf ? '#d1fae5' : '#6b7280';
+              const lockIconColor = isSelf ? AppColors.brand.muted : AppColors.status.neutral;
 
               const hasSubmissionPayload =
                 !!msg.submission_text &&
@@ -174,7 +175,7 @@ export function TournamentChatSection({
             value={draft}
             onChangeText={setDraft}
             placeholder={copy.tournamentChat.messagePlaceholder}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={AppColors.text.subtle}
             multiline
             maxLength={400}
             blurOnSubmit={false}
@@ -188,9 +189,9 @@ export function TournamentChatSection({
             accessibilityLabel={copy.tournamentChat.sendA11y}
           >
             {sending ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={AppColors.text.inverse} />
             ) : (
-              <Send size={20} color="#fff" />
+              <Send size={20} color={AppColors.text.inverse} />
             )}
           </TouchableOpacity>
         </View>
@@ -207,7 +208,7 @@ const styles = createStyles({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   feed: {
@@ -215,7 +216,7 @@ const styles = createStyles({
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: AppColors.text.muted,
     fontSize: 14,
     paddingVertical: 16,
   },
@@ -233,7 +234,7 @@ const styles = createStyles({
   },
   peerName: {
     fontSize: 12,
-    color: '#6b7280',
+    color: AppColors.status.neutral,
     marginBottom: 4,
     marginLeft: 4,
   },
@@ -244,17 +245,17 @@ const styles = createStyles({
     maxWidth: '100%',
   },
   bubbleSelf: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
   },
   bubbleOther: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: AppColors.background.neutral,
   },
   bubbleText: {
     fontSize: 16,
-    color: '#1f2937',
+    color: AppColors.text.strong,
   },
   bubbleTextSelf: {
-    color: '#fff',
+    color: AppColors.text.inverse,
   },
   resultLockedInner: {
     flexDirection: 'row',
@@ -265,21 +266,21 @@ const styles = createStyles({
   resultLockedBubbleText: {
     fontSize: 14,
     fontStyle: 'italic',
-    color: '#4b5563',
+    color: AppColors.text.body,
     flexShrink: 1,
   },
   resultLockedBubbleTextSelf: {
-    color: 'rgba(255,255,255,0.95)',
+    color: 'AppColors.text.onBrand',
   },
   resultLegacyText: {
     fontFamily: AppFonts.mono,
     fontSize: 13,
     lineHeight: 18,
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   resultFallbackText: {
     fontSize: 14,
-    color: '#4b5563',
+    color: AppColors.text.body,
     fontStyle: 'italic',
   },
   composer: {
@@ -289,26 +290,26 @@ const styles = createStyles({
     gap: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: AppColors.background.neutral,
   },
   input: {
     flex: 1,
     minHeight: 44,
     maxHeight: 120,
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    color: '#1a1a1a',
+    borderColor: AppColors.background.disabled,
+    color: AppColors.text.primary,
   },
   sendBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

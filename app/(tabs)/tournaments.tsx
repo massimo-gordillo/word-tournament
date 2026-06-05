@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, RefreshControl, Keyboard } from 'react-native';
 import { createStyles } from '@/lib/createStyles';
+import { AppColors } from '@/constants/colors';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -173,15 +174,15 @@ export default function OngoingTournamentsScreen() {
   const getStatusColor = (status: string, isCreator?: boolean) => {
     switch (status) {
       case 'active':
-        return '#10b981';
+        return AppColors.brand.primary;
       case 'closed':
-        return '#6b7280';
+        return AppColors.status.neutral;
       case 'draft':
-        return '#f59e0b';
+        return AppColors.status.warning;
         // Creator: Draft, Participant: Joined
-        //return isCreator ? '#f59e0b' : '#6b7280';
+        //return isCreator ? AppColors.status.warning : AppColors.status.neutral;
       default:
-        return '#6b7280';
+        return AppColors.status.neutral;
     }
   };
 
@@ -221,7 +222,7 @@ export default function OngoingTournamentsScreen() {
           }}
           disabled={joiningTournament}
         >
-          <Search size={20} color="#fff" />
+          <Search size={20} color={AppColors.text.inverse} />
           <Text style={styles.joinButtonText}>{copy.tournaments.joinByCode}</Text>
         </TouchableOpacity>
       </View>
@@ -233,7 +234,7 @@ export default function OngoingTournamentsScreen() {
         }
       >
         {loading ? (
-          <ActivityIndicator color="#10b981" style={{ marginTop: 40 }} />
+          <ActivityIndicator color={AppColors.brand.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
             {totalOngoingCount === 0 ? (
@@ -366,7 +367,7 @@ export default function OngoingTournamentsScreen() {
             <TextInput
               style={styles.input}
               placeholder={copy.tournaments.joinPlaceholder}
-              placeholderTextColor="#999"
+              placeholderTextColor={AppColors.text.placeholder}
               value={joinCode}
               onChangeText={(text) => setJoinCode(text.toUpperCase())}
               autoCapitalize="characters"
@@ -398,7 +399,7 @@ export default function OngoingTournamentsScreen() {
                 disabled={joiningTournament}
               >
                 {joiningTournament ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={AppColors.text.inverse} />
                 ) : (
                   <Text style={styles.modalButtonTextJoin}>{copy.tournaments.join}</Text>
                 )}
@@ -438,10 +439,10 @@ export default function OngoingTournamentsScreen() {
 const styles = createStyles({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: AppColors.background.app,
   },
   header: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
     padding: 24,
     paddingTop: 40,
     paddingBottom: 20,
@@ -449,13 +450,13 @@ const styles = createStyles({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColors.text.inverse,
     marginBottom: 10,
   },
   joinButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: AppColors.header.onBrandOverlay,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -465,7 +466,7 @@ const styles = createStyles({
     opacity: 0.5,
   },
   joinButtonText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -484,23 +485,23 @@ const styles = createStyles({
   sectionHeaderText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
   },
   sectionHeaderChevron: {
     fontSize: 18,
-    color: '#6b7280',
+    color: AppColors.status.neutral,
   },
   sectionDivider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: AppColors.background.neutral,
     marginBottom: 8,
   },
   tournamentCard: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -515,7 +516,7 @@ const styles = createStyles({
   tournamentName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     flex: 1,
   },
   statusBadge: {
@@ -524,18 +525,18 @@ const styles = createStyles({
     borderRadius: 12,
   },
   statusText: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 12,
     fontWeight: '600',
   },
   tournamentDate: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 4,
   },
   joinCodeText: {
     fontSize: 14,
-    color: '#10b981',
+    color: AppColors.brand.primary,
     fontWeight: '500',
   },
   emptyState: {
@@ -546,23 +547,23 @@ const styles = createStyles({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: AppColors.overlay.dark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.background.surface,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -571,25 +572,25 @@ const styles = createStyles({
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: AppColors.text.muted,
     marginBottom: 24,
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: AppColors.background.input,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: AppColors.background.neutral,
     marginBottom: 16,
   },
   error: {
-    color: '#ef4444',
+    color: AppColors.status.error,
     fontSize: 14,
     marginBottom: 16,
   },
@@ -604,18 +605,18 @@ const styles = createStyles({
     alignItems: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: AppColors.background.subtle,
   },
   modalButtonJoin: {
-    backgroundColor: '#10b981',
+    backgroundColor: AppColors.brand.primary,
   },
   modalButtonTextCancel: {
-    color: '#1a1a1a',
+    color: AppColors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },
   modalButtonTextJoin: {
-    color: '#fff',
+    color: AppColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',
   },
