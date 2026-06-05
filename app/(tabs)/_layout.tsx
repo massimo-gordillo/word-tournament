@@ -3,6 +3,7 @@ import { Home, Trophy, BarChart3, User, Settings } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
 import { AppColors } from '@/constants/colors';
+import { AppFonts, FontSize } from '@/constants/typography';
 import { copy } from '@/app/copy/strings';
 
 export default function TabLayout() {
@@ -34,6 +35,10 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingBottom: 16,
           height: 75,
+        },
+        tabBarLabelStyle: {
+          fontFamily: AppFonts.medium,
+          fontSize: FontSize.xs,
         },
       }}
     >

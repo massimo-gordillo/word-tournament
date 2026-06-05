@@ -3,12 +3,14 @@ import * as Linking from 'expo-linking';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { useAppFonts } from '@/hooks/useAppFonts';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
 import { handleSupabaseAuthUrl, looksLikeSupabaseAuthCallback } from '@/lib/authDeepLink';
 
 export default function RootLayout() {
   useFrameworkReady();
+  const { loaded: fontsLoaded } = useAppFonts();
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {
@@ -23,6 +25,10 @@ export default function RootLayout() {
 
     return () => subscription.remove();
   }, []);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <AuthProvider>

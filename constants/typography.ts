@@ -1,7 +1,14 @@
 import { Platform, TextStyle } from 'react-native';
 
-/** Omit fontFamily on UI text to use the platform default (SF Pro on iOS, Roboto on Android). */
+/**
+ * Merriweather is a screen-optimized serif bundled for iOS/Android/Web.
+ * It is used here as a Georgia-like stand-in (Georgia is iOS-only and not redistributable).
+ */
 export const AppFonts = {
+  regular: 'Merriweather_400Regular',
+  medium: 'Merriweather_500Medium',
+  semiBold: 'Merriweather_600SemiBold',
+  bold: 'Merriweather_700Bold',
   mono: Platform.select({
     ios: 'Menlo',
     android: 'monospace',
@@ -22,73 +29,111 @@ export const FontSize = {
   '5xl': 32,
 } as const;
 
+export function fontFamilyForWeight(weight?: TextStyle['fontWeight']): string {
+  if (
+    weight === 'bold' ||
+    weight === '700' ||
+    weight === 700 ||
+    weight === '800' ||
+    weight === 800 ||
+    weight === '900' ||
+    weight === 900
+  ) {
+    return AppFonts.bold;
+  }
+
+  if (weight === '600' || weight === 600) {
+    return AppFonts.semiBold;
+  }
+
+  if (weight === '500' || weight === 500) {
+    return AppFonts.medium;
+  }
+
+  return AppFonts.regular;
+}
+
 export function withAppFont(style: TextStyle): TextStyle {
-  return style;
+  if (style.fontFamily) {
+    return style;
+  }
+
+  const { fontWeight, ...rest } = style;
+
+  return {
+    ...rest,
+    fontFamily: fontFamilyForWeight(fontWeight),
+  };
 }
 
 export const TextStyles = {
   display: {
     fontSize: FontSize['5xl'],
-    fontWeight: 'bold',
+    fontFamily: AppFonts.bold,
   },
   screenTitle: {
     fontSize: FontSize['4xl'],
-    fontWeight: 'bold',
+    fontFamily: AppFonts.bold,
   },
   titleLarge: {
     fontSize: FontSize['3xl'],
-    fontWeight: 'bold',
+    fontFamily: AppFonts.bold,
   },
   title: {
     fontSize: FontSize['2xl'],
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   titleBold: {
     fontSize: FontSize['2xl'],
-    fontWeight: 'bold',
+    fontFamily: AppFonts.bold,
   },
   subtitle: {
     fontSize: FontSize.xl,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   label: {
     fontSize: FontSize.lg,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   body: {
     fontSize: FontSize.lg,
+    fontFamily: AppFonts.regular,
   },
   bodyMedium: {
     fontSize: FontSize.base,
+    fontFamily: AppFonts.regular,
   },
   bodyMediumSemiBold: {
     fontSize: FontSize.base,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   bodySmall: {
     fontSize: FontSize.md,
+    fontFamily: AppFonts.regular,
   },
   bodySmallMedium: {
     fontSize: FontSize.md,
-    fontWeight: '500',
+    fontFamily: AppFonts.medium,
   },
   bodySmallSemiBold: {
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   caption: {
     fontSize: FontSize.sm,
+    fontFamily: AppFonts.regular,
   },
   captionSemiBold: {
     fontSize: FontSize.sm,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   captionSmall: {
     fontSize: FontSize.xs,
+    fontFamily: AppFonts.regular,
   },
   captionSmallSemiBold: {
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontFamily: AppFonts.semiBold,
   },
   mono: {
     fontSize: FontSize.sm,
