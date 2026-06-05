@@ -4,12 +4,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Modal,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppleSignInButton } from '@/components/AppleSignInButton';
@@ -146,7 +146,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

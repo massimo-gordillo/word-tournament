@@ -13,6 +13,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppConfig } from '@/contexts/ConfigContext';
@@ -921,7 +922,7 @@ export default function TournamentDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

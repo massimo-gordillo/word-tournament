@@ -4,10 +4,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
@@ -187,7 +187,7 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

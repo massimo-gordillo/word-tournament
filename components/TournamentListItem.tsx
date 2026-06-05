@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, GestureResponderEvent } from 'react-native';
+import { TouchableOpacity, View, Text, GestureResponderEvent } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 
 type Props = {
   title: string;
@@ -42,7 +43,7 @@ export function TournamentListItem({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   card: {
     backgroundColor: '#fff',
     padding: 16,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, RefreshControl } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -598,7 +599,7 @@ export default function ManageTournamentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

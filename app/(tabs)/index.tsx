@@ -4,12 +4,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
   RefreshControl,
   Modal,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -565,7 +565,7 @@ export default function DailySubmissionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

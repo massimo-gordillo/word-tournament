@@ -37,7 +37,7 @@ export function DailySubmissionCard({
           >
             {line
               .split('')
-              .map(ch => (ch === 'G' ? '🟩' : ch === 'Y' ? '🟨' : '⬛'))
+              .map(ch => (ch === 'G' ? '🟩' : ch === 'Y' ? '🟨' : '⬜'))
               .join('')}
           </Text>
         ))}
@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
   wordRow: {
     fontSize: 20,
     marginBottom: 0,
-    lineHeight: 22,
-    letterSpacing: -5,
+    lineHeight: 18,
+    letterSpacing: -6,
     textAlign: 'left',
   },
 });

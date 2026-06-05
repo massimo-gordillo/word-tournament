@@ -4,12 +4,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { Lock, Send } from 'lucide-react-native';
 import { DailySubmissionCard } from '@/components/DailySubmissionCard';
+import { AppFonts } from '@/constants/typography';
 import { copy, fillCopyTemplate } from '@/app/copy/strings';
 
 /** Must match placeholder written for `tournament_chat.message` when `message_type` is `result`. */
@@ -198,7 +198,7 @@ export function TournamentChatSection({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   section: {
     paddingHorizontal: 16,
     paddingBottom: 24,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.95)',
   },
   resultLegacyText: {
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    fontFamily: AppFonts.mono,
     fontSize: 13,
     lineHeight: 18,
     color: '#111827',

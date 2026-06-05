@@ -3,11 +3,11 @@ import {
   ActivityIndicator,
   Linking,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { AppColors } from '@/constants/colors';
@@ -70,7 +70,7 @@ export default function PrivacyPolicyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: AppColors.background.app,

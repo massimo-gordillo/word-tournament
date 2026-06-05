@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, useWindowDimensions } from 'react-native';
+import { createStyles } from '@/lib/createStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Target, TrendingUp } from 'lucide-react-native';
@@ -180,19 +181,19 @@ export default function StatisticsScreen() {
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>{copy.stats.guess2}</Text>
               <Text style={styles.guideValue}>
-                {config?.pointsGuess2 ?? 8} {copy.stats.pointsSuffix}
+                {config?.pointsGuess2 ?? 6} {copy.stats.pointsSuffix}
               </Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>{copy.stats.guess3}</Text>
               <Text style={styles.guideValue}>
-                {config?.pointsGuess3 ?? 6} {copy.stats.pointsSuffix}
+                {config?.pointsGuess3 ?? 4} {copy.stats.pointsSuffix}
               </Text>
             </View>
             <View style={styles.scoreGuideRow}>
               <Text style={styles.guideLabel}>{copy.stats.guess4}</Text>
               <Text style={styles.guideValue}>
-                {config?.pointsGuess4 ?? 4} {copy.stats.pointsSuffix}
+                {config?.pointsGuess4 ?? 3} {copy.stats.pointsSuffix}
               </Text>
             </View>
             <View style={styles.scoreGuideRow}>
@@ -220,7 +221,7 @@ export default function StatisticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

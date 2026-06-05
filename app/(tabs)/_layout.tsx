@@ -33,7 +33,7 @@ export default function TabLayout() {
           borderTopColor: AppColors.border.default,
           paddingTop: 8,
           paddingBottom: 16,
-          height: 65,
+          height: 75,
         },
       }}
     >
